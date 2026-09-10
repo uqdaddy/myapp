@@ -15,8 +15,8 @@ interface Props {
 type Step = 'side' | 'formation' | 'difficulty';
 
 const WING_LABEL: Record<WingSetup, string> = {
-  'horse-outer': '마 · 상 (마 바깥)',
-  'elephant-outer': '상 · 마 (상 바깥)',
+  'horse-outer': '마 / 상',
+  'elephant-outer': '상 / 마',
 };
 
 export function SetupScreen({ onStart }: Props) {
@@ -77,28 +77,26 @@ export function SetupScreen({ onStart }: Props) {
             내 진영 좌·우 날개에서 마(馬)와 상(象)의 순서를 정합니다. 하단 기준 왼쪽/오른쪽이에요.
           </p>
 
-          <div className="control-row">
-            <label>왼쪽</label>
-            <div className="segmented">
+          <div className="wing-grid">
+            <div className="wing-col">
+              <div className="wing-head">왼쪽</div>
               {(['horse-outer', 'elephant-outer'] as WingSetup[]).map((w) => (
                 <button
                   key={w}
-                  className={left === w ? 'active' : ''}
+                  className={`wing-btn ${left === w ? 'active' : ''}`}
                   onClick={() => setLeft(w)}
                 >
                   {WING_LABEL[w]}
                 </button>
               ))}
             </div>
-          </div>
 
-          <div className="control-row">
-            <label>오른쪽</label>
-            <div className="segmented">
+            <div className="wing-col">
+              <div className="wing-head">오른쪽</div>
               {(['horse-outer', 'elephant-outer'] as WingSetup[]).map((w) => (
                 <button
                   key={w}
-                  className={right === w ? 'active' : ''}
+                  className={`wing-btn ${right === w ? 'active' : ''}`}
                   onClick={() => setRight(w)}
                 >
                   {WING_LABEL[w]}

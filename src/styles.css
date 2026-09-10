@@ -388,3 +388,37 @@ body {
 .setup-nav .btn {
   flex: 1;
 }
+
+/* Wing (마/상) setup: two columns (왼쪽 / 오른쪽), options stacked below each. */
+.wing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.wing-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.wing-head {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #f0d9a8;
+  padding-bottom: 2px;
+}
+.wing-btn {
+  padding: 14px 8px;
+  border: 2px solid #5a4d43;
+  background: #4a413a;
+  color: #e6d9c2;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+.wing-btn.active {
+  border-color: #c8965a;
+  background: #574433;
+  color: #f0d9a8;
+}
