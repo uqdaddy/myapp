@@ -15,12 +15,25 @@ export function InAppNotice() {
   }, []);
 
   const copyUrl = async () => {
+    let ok = false;
     try {
       await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      ok = true;
     } catch {
-      setCopied(false);
+      // Fallback for browsers without clipboard API: select the URL text so the
+      // user can copy it manually.
+      const el = document.getElementById('inapp-url-text');
+      if (el) {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+      }
+    }
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
     }
   };
 
@@ -29,8 +42,9 @@ export function InAppNotice() {
       <div className="inapp-card">
         <h1 className="inapp-title">장기</h1>
         <p className="inapp-msg">
-          지금은 <b>카카오톡 앱 안의 브라우저</b>로 열려 있어요. 여기서는 AI 엔진이
-          동작하지 않습니다. <b>사파리나 크롬</b>에서 열어주세요.
+          카카오톡 안에서는 AI 엔진이 동작하지 않아요.
+          <br />
+          <b>사파리나 크롬에서 열어야</b> 합니다.
         </p>
 
         {p === 'android' ? (
@@ -39,24 +53,30 @@ export function InAppNotice() {
               외부 브라우저로 열기
             </button>
             <p className="inapp-hint">
-              자동으로 안 열리면, 오른쪽 위 <b>⋮</b> 메뉴 → <b>“다른 브라우저로 열기”</b>를
-              선택하세요.
+              버튼을 눌러도 안 열리면, 오른쪽 위 <b>⋮</b> → <b>“다른 브라우저로 열기”</b>
             </p>
           </>
         ) : (
           <>
-            <p className="inapp-hint">
-              오른쪽 아래(또는 위)의 <b>공유/메뉴 아이콘</b>을 누른 뒤{' '}
-              <b>“Safari로 열기”</b>를 선택하세요.
-            </p>
-            <button className="btn inapp-btn" onClick={copyUrl}>
-              {copied ? '주소가 복사됐어요' : '주소 복사하기'}
+            {/* Primary, most reliable path on iOS: copy the URL, then paste in Safari */}
+            <button className="btn primary inapp-btn" onClick={copyUrl}>
+              {copied ? '✓ 주소가 복사됐어요' : '① 주소 복사하기'}
             </button>
-            <p className="inapp-hint">주소를 복사해 Safari 주소창에 붙여넣어도 됩니다.</p>
+            <ol className="inapp-steps">
+              <li>위 버튼으로 <b>주소를 복사</b></li>
+              <li><b>사파리(Safari)</b> 앱을 직접 실행</li>
+              <li>주소창을 길게 눌러 <b>붙여넣기 → 이동</b></li>
+            </ol>
+            <p className="inapp-hint">
+              또는 이 화면 <b>오른쪽 아래의 사파리(나침반) 아이콘</b>을 누르면 바로
+              열립니다. (없으면 오른쪽 위 <b>⋯</b> → <b>Safari로 열기</b>)
+            </p>
           </>
         )}
 
-        <div className="inapp-url">{url}</div>
+        <div className="inapp-url" id="inapp-url-text">
+          {url}
+        </div>
       </div>
     </div>
   );

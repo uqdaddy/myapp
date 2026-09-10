@@ -578,6 +578,18 @@ body {
   line-height: 1.5;
   margin-top: 12px;
 }
+.inapp-steps {
+  text-align: left;
+  margin: 14px auto 0;
+  padding-left: 22px;
+  max-width: 280px;
+  font-size: 14px;
+  line-height: 1.9;
+  color: #e7d9bd;
+}
+.inapp-steps b {
+  color: #f0d9a8;
+}
 .inapp-url {
   margin-top: 16px;
   padding: 10px;
@@ -586,4 +598,5 @@ body {
   font-size: 12px;
   color: #8a7a63;
   word-break: break-all;
+  user-select: all;
 }
