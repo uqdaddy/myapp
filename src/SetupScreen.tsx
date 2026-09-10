@@ -27,7 +27,7 @@ export function SetupScreen({ onStart }: Props) {
 
   return (
     <div className="setup">
-      <h1 className="setup-title">장기 · Janggi</h1>
+      <h1 className="setup-title">장기</h1>
       <p className="setup-sub">AI와 대전 · 시작 전에 설정을 골라주세요</p>
 
       <div className="stepper">

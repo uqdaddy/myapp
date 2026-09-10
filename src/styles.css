@@ -91,32 +91,29 @@ body {
 }
 
 .piece-oct {
-  stroke: #6b4a22;
-  stroke-width: 1.4;
+  stroke: rgba(120, 85, 40, 0.5);
+  stroke-width: 0.8;
 }
 .piece-edge {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.35); /* top bevel highlight */
-  stroke-width: 0.8;
+  stroke: rgba(255, 255, 255, 0.45); /* top bevel highlight */
+  stroke-width: 0.9;
 }
 
 .piece-inner {
   fill: none;
-  stroke-width: 1.2;
+  stroke-width: 1.4;
 }
 .inner-cho {
-  stroke: rgba(10, 109, 58, 0.6);
+  stroke: rgba(7, 90, 48, 0.75);
 }
 .inner-han {
-  stroke: rgba(176, 32, 32, 0.6);
+  stroke: rgba(158, 21, 21, 0.75);
 }
 
 .piece-selected {
   stroke: #b8791f;
-  stroke-width: 2.6;
-}
-.piece-group.selected {
-  filter: url(#pieceShadow) drop-shadow(0 0 5px rgba(255, 205, 90, 0.95));
+  stroke-width: 2.2;
 }
 
 .piece-label {
@@ -243,18 +240,70 @@ body {
 }
 
 .game-actions {
-  padding: 4px 12px calc(env(safe-area-inset-bottom) + 14px);
+  padding: 8px 12px calc(env(safe-area-inset-bottom) + 14px);
+}
+.game-actions .btn {
+  width: 100%;
+}
+
+/* ---- Captured pieces + score trays ---- */
+.tray {
+  margin: 0 12px;
+  padding: 8px 10px;
+  background: rgba(58, 50, 45, 0.7);
+  border-radius: 10px;
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  gap: 6px;
 }
-.game-actions .btn.primary {
-  flex: 1;
+.tray-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
 }
-.sound-toggle {
-  flex: 0 0 auto;
-  width: 52px;
-  font-size: 20px;
-  padding: 12px 0;
+.tray-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+.name-cho {
+  color: #2ec77a;
+}
+.name-han {
+  color: #ff6b6b;
+}
+.tray-score {
+  font-size: 15px;
+  font-weight: 800;
+  color: #f0d9a8;
+}
+.tray-pieces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  min-height: 24px;
+  align-items: center;
+}
+.tray-empty {
+  font-size: 12px;
+  color: #8a7a63;
+}
+.cap-piece {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 800;
+  font-family: 'Nanum Myeongjo', 'Apple SD Gothic Neo', 'Malgun Gothic', serif;
+  background: #efe0bd;
+  border: 1px solid #b79a63;
+}
+.cap-cho {
+  color: #075a30;
+}
+.cap-han {
+  color: #9e1515;
 }
 
 /* ---- Setup / start screen ---- */

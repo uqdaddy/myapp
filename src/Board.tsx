@@ -10,32 +10,27 @@ interface Props {
   humanSide: Side;
 }
 
-// The board is drawn as an SVG grid. Pieces sit on the intersections
-// (9 columns x 10 rows of points => 8 x 9 cells).
 const COLS = 9;
 const ROWS = 10;
-const MARGIN = 30; // px around the grid
-const GAP = 40; // px between grid lines
-const PAD = 12; // wood border outside the play grid
+const MARGIN = 32; // px around the grid
+const GAP = 42; // px between grid lines
+const PAD = 16; // wood border outside the play grid
 
 const W = MARGIN * 2 + GAP * (COLS - 1);
 const H = MARGIN * 2 + GAP * (ROWS - 1);
 
-// Real Janggi pieces are octagonal wooden discs whose size reflects rank:
-// the General is largest, then Chariot/Cannon, then Horse/Elephant, then
-// Guard, and the Soldiers are smallest.
+// Piece sizes reflect rank: General largest, then Chariot/Cannon, Horse/
+// Elephant, Guard, Soldier smallest.
 const PIECE_RADIUS: Record<PieceType, number> = {
-  general: 20,
-  chariot: 18,
-  cannon: 18,
-  horse: 16.5,
-  elephant: 16.5,
-  guard: 15,
-  soldier: 14,
+  general: 21,
+  chariot: 19,
+  cannon: 19,
+  horse: 17,
+  elephant: 17,
+  guard: 15.5,
+  soldier: 14.5,
 };
 
-// Build the point list for a regular octagon of the given radius, rotated so
-// a flat edge sits at the top (like a real Janggi stone).
 function octagonPoints(cx: number, cy: number, radius: number): string {
   const pts: string[] = [];
   for (let i = 0; i < 8; i++) {
@@ -68,68 +63,72 @@ export function Board({
       aria-label="장기판"
     >
       <defs>
-        {/* wood grain gradient for the board */}
-        <linearGradient id="woodGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#e6bd82" />
-          <stop offset="45%" stopColor="#d8a862" />
-          <stop offset="100%" stopColor="#c28f4d" />
+        {/* board wood surface */}
+        <linearGradient id="woodGrad" x1="0" y1="0" x2="0.9" y2="1">
+          <stop offset="0%" stopColor="#eec488" />
+          <stop offset="40%" stopColor="#e0ad68" />
+          <stop offset="100%" stopColor="#c98f49" />
         </linearGradient>
         <linearGradient id="woodBorder" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#7a4f24" />
-          <stop offset="100%" stopColor="#5c3a18" />
+          <stop offset="0%" stopColor="#8a5a2c" />
+          <stop offset="50%" stopColor="#6e451f" />
+          <stop offset="100%" stopColor="#4f3013" />
         </linearGradient>
-        {/* subtle grain streaks */}
-        <linearGradient id="grain" x1="0" y1="0" x2="1" y2="0.15">
-          <stop offset="0%" stopColor="rgba(120,80,30,0)" />
-          <stop offset="50%" stopColor="rgba(120,80,30,0.10)" />
-          <stop offset="100%" stopColor="rgba(120,80,30,0)" />
-        </linearGradient>
-
-        {/* ivory stone face gradient (radial, lit from top-left) */}
-        <radialGradient id="stoneCho" cx="38%" cy="32%" r="75%">
-          <stop offset="0%" stopColor="#fdf3dc" />
-          <stop offset="60%" stopColor="#eeddb6" />
-          <stop offset="100%" stopColor="#d9c193" />
-        </radialGradient>
-        <radialGradient id="stoneHan" cx="38%" cy="32%" r="75%">
-          <stop offset="0%" stopColor="#fdf3dc" />
-          <stop offset="60%" stopColor="#eeddb6" />
-          <stop offset="100%" stopColor="#d9c193" />
+        {/* soft vignette to give the surface depth */}
+        <radialGradient id="vignette" cx="50%" cy="45%" r="72%">
+          <stop offset="60%" stopColor="rgba(0,0,0,0)" />
+          <stop offset="100%" stopColor="rgba(60,35,10,0.28)" />
         </radialGradient>
 
-        <filter id="pieceShadow" x="-40%" y="-40%" width="180%" height="180%">
-          <feDropShadow dx="0" dy="2" stdDeviation="1.8" floodColor="#000" floodOpacity="0.45" />
+        {/* ivory stone face, lit from top-left */}
+        <radialGradient id="stoneFace" cx="36%" cy="30%" r="80%">
+          <stop offset="0%" stopColor="#fff6e2" />
+          <stop offset="55%" stopColor="#f0dfb8" />
+          <stop offset="100%" stopColor="#cdb079" />
+        </radialGradient>
+        {/* thin rim for the wooden edge of the disc */}
+        <linearGradient id="stoneRim" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#d8be8a" />
+          <stop offset="100%" stopColor="#9c7c46" />
+        </linearGradient>
+
+        <filter id="pieceShadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="2.2" stdDeviation="1.8" floodColor="#000" floodOpacity="0.5" />
         </filter>
-        <filter id="boardShadow" x="-10%" y="-10%" width="120%" height="120%">
-          <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#000" floodOpacity="0.4" />
+        <filter id="boardShadow" x="-15%" y="-15%" width="130%" height="130%">
+          <feDropShadow dx="0" dy="4" stdDeviation="5" floodColor="#000" floodOpacity="0.45" />
+        </filter>
+        <filter id="selGlow" x="-60%" y="-60%" width="220%" height="220%">
+          <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#ffcf5a" floodOpacity="1" />
         </filter>
       </defs>
 
-      {/* wooden border frame */}
+      {/* wooden outer frame */}
       <rect
         x={-PAD}
         y={-PAD}
         width={W + PAD * 2}
         height={H + PAD * 2}
-        rx={10}
+        rx={12}
         fill="url(#woodBorder)"
         filter="url(#boardShadow)"
       />
+      {/* inner frame line */}
+      <rect
+        x={-PAD / 2}
+        y={-PAD / 2}
+        width={W + PAD}
+        height={H + PAD}
+        rx={8}
+        fill="none"
+        stroke="rgba(0,0,0,0.25)"
+        strokeWidth={1}
+      />
       {/* playing surface */}
-      <rect x={0} y={0} width={W} height={H} rx={4} fill="url(#woodGrad)" />
-      {/* faint grain streaks */}
-      {Array.from({ length: 6 }, (_, i) => (
-        <rect
-          key={`grain${i}`}
-          x={0}
-          y={(H / 6) * i + 6}
-          width={W}
-          height={10}
-          fill="url(#grain)"
-        />
-      ))}
+      <rect x={0} y={0} width={W} height={H} rx={3} fill="url(#woodGrad)" />
+      <rect x={0} y={0} width={W} height={H} rx={3} fill="url(#vignette)" />
 
-      {/* horizontal lines */}
+      {/* ALL horizontal lines (10 rows), full width */}
       {Array.from({ length: ROWS }, (_, r) => (
         <line
           key={`h${r}`}
@@ -141,31 +140,19 @@ export function Board({
         />
       ))}
 
-      {/* vertical lines: outer columns and the CENTER column run fully;
-          the other inner columns are broken by the river (강). */}
-      {Array.from({ length: COLS }, (_, c) => {
-        const full = c === 0 || c === COLS - 1 || c === 4;
-        if (full) {
-          return (
-            <line
-              key={`v${c}`}
-              x1={sx(c)}
-              y1={sy(0)}
-              x2={sx(c)}
-              y2={sy(ROWS - 1)}
-              className="grid-line"
-            />
-          );
-        }
-        return (
-          <g key={`v${c}`}>
-            <line x1={sx(c)} y1={sy(0)} x2={sx(c)} y2={sy(4)} className="grid-line" />
-            <line x1={sx(c)} y1={sy(5)} x2={sx(c)} y2={sy(ROWS - 1)} className="grid-line" />
-          </g>
-        );
-      })}
+      {/* ALL vertical lines (9 cols), full height — no river gaps */}
+      {Array.from({ length: COLS }, (_, c) => (
+        <line
+          key={`v${c}`}
+          x1={sx(c)}
+          y1={sy(0)}
+          x2={sx(c)}
+          y2={sy(ROWS - 1)}
+          className="grid-line"
+        />
+      ))}
 
-      {/* palace diagonals */}
+      {/* palace diagonals (both palaces) */}
       {[0, 7].map((base) => (
         <g key={`palace${base}`}>
           <line x1={sx(3)} y1={sy(base)} x2={sx(5)} y2={sy(base + 2)} className="grid-line" />
@@ -176,23 +163,23 @@ export function Board({
       {/* last move highlight */}
       {lastMove && (
         <>
-          <circle cx={sx(lastMove.from.c)} cy={sy(lastMove.from.r)} r={16} className="last-from" />
-          <circle cx={sx(lastMove.to.c)} cy={sy(lastMove.to.r)} r={16} className="last-to" />
+          <circle cx={sx(lastMove.from.c)} cy={sy(lastMove.from.r)} r={17} className="last-from" />
+          <circle cx={sx(lastMove.to.c)} cy={sy(lastMove.to.r)} r={17} className="last-to" />
         </>
       )}
 
-      {/* legal target dots */}
+      {/* legal target markers */}
       {legalTargets.map((m) => (
         <circle
           key={`t${m.to.r}-${m.to.c}`}
           cx={sx(m.to.c)}
           cy={sy(m.to.r)}
-          r={m.captured ? 17 : 7}
+          r={m.captured ? 18 : 7}
           className={m.captured ? 'target-capture' : 'target-dot'}
         />
       ))}
 
-      {/* pieces + tap zones (iterate LOGICAL cells; tap passes logical coords) */}
+      {/* pieces + tap zones (iterate LOGICAL cells) */}
       {board.map((row, r) =>
         row.map((piece, c) => {
           const isSel = selected && selected.r === r && selected.c === c;
@@ -204,7 +191,6 @@ export function Board({
               onClick={() => onCellTap(r, c)}
               style={{ cursor: 'pointer' }}
             >
-              {/* invisible tap area covering the full cell */}
               <rect
                 x={px - GAP / 2}
                 y={py - GAP / 2}
@@ -215,26 +201,22 @@ export function Board({
               {piece &&
                 (() => {
                   const rad = PIECE_RADIUS[piece.type];
-                  const fontSize = rad * 1.15;
+                  const fontSize = rad * 1.18;
                   return (
-                    <g
-                      className={isSel ? 'piece-group selected' : 'piece-group'}
-                      filter="url(#pieceShadow)"
-                    >
-                      {/* stone body */}
+                    <g filter={isSel ? 'url(#selGlow)' : 'url(#pieceShadow)'}>
+                      {/* wooden rim */}
+                      <polygon points={octagonPoints(px, py, rad)} fill="url(#stoneRim)" />
+                      {/* ivory face slightly inset */}
                       <polygon
-                        points={octagonPoints(px, py, rad)}
-                        fill={piece.side === 'cho' ? 'url(#stoneCho)' : 'url(#stoneHan)'}
+                        points={octagonPoints(px, py, rad - 2)}
+                        fill="url(#stoneFace)"
                         className={`piece-oct ${isSel ? 'piece-selected' : ''}`}
                       />
-                      {/* outer edge line */}
-                      <polygon
-                        points={octagonPoints(px, py, rad - 0.6)}
-                        className="piece-edge"
-                      />
+                      {/* top bevel highlight */}
+                      <polygon points={octagonPoints(px, py, rad - 2)} className="piece-edge" />
                       {/* engraved ring in the side's color */}
                       <polygon
-                        points={octagonPoints(px, py, rad - 3.2)}
+                        points={octagonPoints(px, py, rad - 4.6)}
                         className={`piece-inner inner-${piece.side}`}
                       />
                       <text

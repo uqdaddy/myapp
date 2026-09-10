@@ -1,19 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Board } from './Board';
+import { CapturedTray } from './CapturedTray';
 import { SetupScreen, StartConfig } from './SetupScreen';
-import {
-  playPlaceSound,
-  unlockAudio,
-  isSoundEnabled,
-  setSoundEnabled,
-} from './sound';
 import { initialBoard, DEFAULT_SETUP } from './engine/board';
 import { applyMove, legalMovesFor } from './engine/moves';
 import { getStatus } from './engine/game';
 import { chooseMove, Difficulty } from './engine/ai';
+import { materialScore, capturedByOpponentOf } from './engine/score';
 import { Board as BoardState, Move, Pos, Side, SideSetup, opponent } from './engine/types';
 
-const SIDE_NAME: Record<Side, string> = { cho: '초 (楚)', han: '한 (漢)' };
+const SIDE_NAME: Record<Side, string> = { cho: '초', han: '한' };
 
 type Phase = 'setup' | 'playing';
 
@@ -27,7 +23,6 @@ export default function App() {
   const [selected, setSelected] = useState<Pos | null>(null);
   const [lastMove, setLastMove] = useState<Move | null>(null);
   const [thinking, setThinking] = useState(false);
-  const [soundOn, setSoundOn] = useState(isSoundEnabled());
 
   const status = useMemo(() => getStatus(board, toMove), [board, toMove]);
   const gameOver = status.kind !== 'playing';
@@ -40,8 +35,20 @@ export default function App() {
   const aiSide = opponent(humanSide);
   const aiTimer = useRef<number | null>(null);
 
+  // Scores and captured pieces derived from the current board.
+  const humanScore = useMemo(() => materialScore(board, humanSide), [board, humanSide]);
+  const aiScore = useMemo(() => materialScore(board, aiSide), [board, aiSide]);
+  // Pieces the human captured = opponent (AI) pieces missing from the board.
+  const humanCaptured = useMemo(
+    () => capturedByOpponentOf(board, aiSide),
+    [board, aiSide]
+  );
+  const aiCaptured = useMemo(
+    () => capturedByOpponentOf(board, humanSide),
+    [board, humanSide]
+  );
+
   const doMove = useCallback((move: Move) => {
-    playPlaceSound(!!move.captured); // wooden "clack" on every move
     setBoard((b) => applyMove(b, move));
     setLastMove(move);
     setSelected(null);
@@ -50,7 +57,6 @@ export default function App() {
 
   const onCellTap = useCallback(
     (r: number, c: number) => {
-      unlockAudio(); // enable audio on first user gesture (mobile requirement)
       if (gameOver || thinking) return;
       if (toMove !== humanSide) return; // not your turn
 
@@ -85,13 +91,10 @@ export default function App() {
     setThinking(true);
 
     const startedAt = Date.now();
-    // Give the UI a moment to paint the "thinking" state before the
-    // (synchronous) search runs, then compute the move.
     aiTimer.current = window.setTimeout(() => {
       const move = chooseMove(board, aiSide, difficulty);
       const elapsed = Date.now() - startedAt;
       const wait = Math.max(0, MIN_AI_DELAY - elapsed);
-      // Wait out the remaining time so total delay is at least MIN_AI_DELAY.
       aiTimer.current = window.setTimeout(() => {
         setThinking(false);
         if (move) doMove(move);
@@ -108,13 +111,12 @@ export default function App() {
     if (aiTimer.current) window.clearTimeout(aiTimer.current);
     const human = cfg.humanSide;
     const humanSetup: SideSetup = cfg.humanSetup;
-    // AI uses the default formation for its own side.
     const choSetup = human === 'cho' ? humanSetup : DEFAULT_SETUP;
     const hanSetup = human === 'han' ? humanSetup : DEFAULT_SETUP;
 
     setHumanSide(human);
     setBoard(initialBoard(choSetup, hanSetup));
-    setToMove('cho'); // Cho always moves first
+    setToMove('cho');
     setSelected(null);
     setLastMove(null);
     setThinking(false);
@@ -152,6 +154,14 @@ export default function App() {
         {thinking ? 'AI가 생각하는 중…' : statusText}
       </div>
 
+      {/* Opponent (AI) tray at the top: shows pieces the AI captured. */}
+      <CapturedTray
+        owner={aiSide}
+        captured={aiCaptured}
+        score={aiScore}
+        label={`AI (${SIDE_NAME[aiSide]})`}
+      />
+
       <div className="board-wrap">
         <Board
           board={board}
@@ -163,22 +173,15 @@ export default function App() {
         />
       </div>
 
+      {/* Human tray at the bottom: shows pieces the player captured. */}
+      <CapturedTray
+        owner={humanSide}
+        captured={humanCaptured}
+        score={humanScore}
+        label={`나 (${SIDE_NAME[humanSide]})`}
+      />
+
       <div className="game-actions">
-        <button
-          className="btn sound-toggle"
-          aria-label={soundOn ? '소리 끄기' : '소리 켜기'}
-          onClick={() => {
-            const next = !soundOn;
-            setSoundEnabled(next);
-            setSoundOn(next);
-            if (next) {
-              unlockAudio();
-              playPlaceSound(false); // preview click
-            }
-          }}
-        >
-          {soundOn ? '🔊' : '🔇'}
-        </button>
         <button className="btn primary" onClick={backToSetup}>
           새 게임
         </button>
