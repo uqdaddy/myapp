@@ -431,27 +431,16 @@ function negamax(
   const inCheck = isInCheck(board, side);
   const d = inCheck ? depth + 1 : depth;
 
-  const alphaOrig = alpha;
+  // Probe the transposition table only for a MOVE-ORDERING hint (bestKey).
+  // We deliberately do NOT return cached scores or bounds here: mixing cached
+  // bounds with the null-window PVS scout below produced incorrect results
+  // (e.g. failing to save a more valuable piece). Ordering-only is always safe
+  // and still gives most of the speed benefit.
   const hash = hashBoard(board, side);
   const tt = st.tt.get(hash);
-  if (tt && tt.depth >= d) {
-    if (tt.flag === 'exact') return tt.score;
-    if (tt.flag === 'lower' && tt.score > alpha) alpha = tt.score;
-    else if (tt.flag === 'upper' && tt.score < beta) beta = tt.score;
-    if (alpha >= beta) return tt.score;
-  }
 
   if (d <= 0) {
     return quiescence(board, side, alpha, beta, 6, st);
-  }
-
-  // Null-move pruning: if giving the opponent a free move still leaves us at
-  // or above beta, this line is so good we can prune it. Skip when in check or
-  // at shallow depth (and only with a finite beta window).
-  if (!inCheck && d >= 3 && beta < VALUES.general / 2) {
-    const R = 2; // reduction
-    const nullScore = -negamax(board, opponent(side), d - 1 - R, -beta, -beta + 1, ply + 1, st);
-    if (nullScore >= beta) return beta;
   }
 
   const moves = allLegalMoves(board, side);
@@ -462,21 +451,11 @@ function negamax(
   let best = -Infinity;
   let bestKey: string | undefined;
   const ordered = orderMoves(board, moves, st, ply, tt?.bestKey);
-  let first = true;
+  // Plain alpha-beta (no PVS/null-window scout): correctness first. Good move
+  // ordering (MVV-LVA + killers + history) keeps it efficient enough.
   for (const move of ordered) {
     const next = applyMove(board, move);
-    let score: number;
-    if (first) {
-      // Principal variation: full-window search for the first (best-ordered) move.
-      score = -negamax(next, opponent(side), d - 1, -beta, -alpha, ply + 1, st);
-    } else {
-      // Others: quick null-window scout; re-search fully only if it looks better.
-      score = -negamax(next, opponent(side), d - 1, -alpha - 1, -alpha, ply + 1, st);
-      if (score > alpha && score < beta) {
-        score = -negamax(next, opponent(side), d - 1, -beta, -alpha, ply + 1, st);
-      }
-    }
-    first = false;
+    const score = -negamax(next, opponent(side), d - 1, -beta, -alpha, ply + 1, st);
     if (score > best) {
       best = score;
       bestKey = moveKey(move);
@@ -491,11 +470,10 @@ function negamax(
     }
   }
 
-  // Store in the transposition table keyed by the effective (extended) depth.
-  let flag: TTFlag = 'exact';
-  if (best <= alphaOrig) flag = 'upper';
-  else if (best >= beta) flag = 'lower';
-  st.tt.set(hash, { depth: d, score: best, flag, bestKey });
+  // Store the best move for future ordering (depth-preferred).
+  if (!tt || tt.depth <= d) {
+    st.tt.set(hash, { depth: d, score: best, flag: 'exact', bestKey });
+  }
 
   return best;
 }
