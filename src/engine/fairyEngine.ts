@@ -54,34 +54,62 @@ function injectScript(src: string): Promise<void> {
   });
 }
 
+// Wrap a promise with a timeout so a hung step (e.g. Safari creating shared
+// memory that never resolves) can't leave the AI stuck forever.
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error(`timeout: ${label}`)), ms);
+    p.then(
+      (v) => {
+        clearTimeout(t);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(t);
+        reject(e);
+      }
+    );
+  });
+}
+
 async function loadModule(): Promise<StockfishModule> {
   if (modulePromise) return modulePromise;
 
   modulePromise = (async () => {
     if (typeof window === 'undefined' || typeof document === 'undefined') {
-      throw new Error('engine requires a browser environment');
+      throw new Error('브라우저 환경이 아닙니다');
     }
-    // SharedArrayBuffer is required by this multithreaded WASM build. If the
-    // page is not cross-origin isolated, bail out early so the app can fall
-    // back to the built-in AI (and we get a clear reason).
-    if (typeof SharedArrayBuffer === 'undefined' || self.crossOriginIsolated === false) {
-      throw new Error('SharedArrayBuffer unavailable (not cross-origin isolated)');
+    // The multithreaded WASM build REQUIRES cross-origin isolation +
+    // SharedArrayBuffer. Require it strictly (=== true): on some browsers
+    // (notably iOS Safari) crossOriginIsolated can be undefined before the SW
+    // controls the page, in which case we must NOT proceed or the engine hangs.
+    if (typeof SharedArrayBuffer === 'undefined' || self.crossOriginIsolated !== true) {
+      throw new Error('이 브라우저에서 엔진 실행 조건(SharedArrayBuffer)을 사용할 수 없습니다');
     }
 
     const b = base();
-    await injectScript(`${b}engine/stockfish.js`);
+    await withTimeout(injectScript(`${b}engine/stockfish.js`), 15000, 'load script');
 
     const factory = (window as unknown as {
       Stockfish?: (opts: Record<string, unknown>) => Promise<StockfishModule>;
     }).Stockfish;
-    if (!factory) throw new Error('Stockfish factory not found after script load');
+    if (!factory) throw new Error('엔진 로더를 찾지 못했습니다');
 
-    const instance = await factory({
-      locateFile: (path: string) => `${b}engine/${path}`,
-    });
+    // Instantiating the WASM module can hang on unsupported browsers -> timeout.
+    const instance = await withTimeout(
+      factory({ locateFile: (path: string) => `${b}engine/${path}` }),
+      20000,
+      'instantiate wasm'
+    );
     instance.addMessageListener(onLine);
     return instance;
   })();
+
+  // Don't cache a failed attempt: reset so a later retry (or the error overlay)
+  // works cleanly instead of reusing a rejected/hung promise.
+  modulePromise.catch(() => {
+    modulePromise = null;
+  });
 
   return modulePromise;
 }
@@ -111,13 +139,25 @@ function sendAndWait(
 }
 
 // Initialize the engine for Janggi. Resolves when ready, rejects on failure.
+// Guarded so it can never hang indefinitely.
+let initPromise: Promise<void> | null = null;
 export async function initEngine(): Promise<void> {
   if (ready) return;
-  const mod = await loadModule();
-  await sendAndWait(mod, 'uci', (l) => l === 'uciok');
-  mod.postMessage('setoption name UCI_Variant value janggi');
-  await sendAndWait(mod, 'isready', (l) => l === 'readyok');
-  ready = true;
+  if (initPromise) return initPromise;
+
+  initPromise = (async () => {
+    const mod = await loadModule();
+    await sendAndWait(mod, 'uci', (l) => l === 'uciok', 15000);
+    mod.postMessage('setoption name UCI_Variant value janggi');
+    await sendAndWait(mod, 'isready', (l) => l === 'readyok', 15000);
+    ready = true;
+  })();
+
+  initPromise.catch(() => {
+    initPromise = null; // allow a clean retry / surface the error
+  });
+
+  return initPromise;
 }
 
 export function isEngineReady(): boolean {
