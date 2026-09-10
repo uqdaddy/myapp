@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Board } from './Board';
 import { SetupScreen, StartConfig } from './SetupScreen';
+import {
+  playPlaceSound,
+  unlockAudio,
+  isSoundEnabled,
+  setSoundEnabled,
+} from './sound';
 import { initialBoard, DEFAULT_SETUP } from './engine/board';
 import { applyMove, legalMovesFor } from './engine/moves';
 import { getStatus } from './engine/game';
@@ -20,6 +26,7 @@ export default function App() {
   const [selected, setSelected] = useState<Pos | null>(null);
   const [lastMove, setLastMove] = useState<Move | null>(null);
   const [thinking, setThinking] = useState(false);
+  const [soundOn, setSoundOn] = useState(isSoundEnabled());
 
   const status = useMemo(() => getStatus(board, toMove), [board, toMove]);
   const gameOver = status.kind !== 'playing';
@@ -33,6 +40,7 @@ export default function App() {
   const aiTimer = useRef<number | null>(null);
 
   const doMove = useCallback((move: Move) => {
+    playPlaceSound(!!move.captured); // wooden "clack" on every move
     setBoard((b) => applyMove(b, move));
     setLastMove(move);
     setSelected(null);
@@ -41,6 +49,7 @@ export default function App() {
 
   const onCellTap = useCallback(
     (r: number, c: number) => {
+      unlockAudio(); // enable audio on first user gesture (mobile requirement)
       if (gameOver || thinking) return;
       if (toMove !== humanSide) return; // not your turn
 
@@ -143,6 +152,21 @@ export default function App() {
       </div>
 
       <div className="game-actions">
+        <button
+          className="btn sound-toggle"
+          aria-label={soundOn ? '소리 끄기' : '소리 켜기'}
+          onClick={() => {
+            const next = !soundOn;
+            setSoundEnabled(next);
+            setSoundOn(next);
+            if (next) {
+              unlockAudio();
+              playPlaceSound(false); // preview click
+            }
+          }}
+        >
+          {soundOn ? '🔊' : '🔇'}
+        </button>
         <button className="btn primary" onClick={backToSetup}>
           새 게임
         </button>

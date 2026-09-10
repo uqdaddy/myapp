@@ -247,9 +247,17 @@ body {
 
 .game-actions {
   padding: 4px 12px calc(env(safe-area-inset-bottom) + 14px);
+  display: flex;
+  gap: 10px;
 }
-.game-actions .btn {
-  width: 100%;
+.game-actions .btn.primary {
+  flex: 1;
+}
+.sound-toggle {
+  flex: 0 0 auto;
+  width: 52px;
+  font-size: 20px;
+  padding: 12px 0;
 }
 
 /* ---- Setup / start screen ---- */
