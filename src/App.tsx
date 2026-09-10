@@ -20,7 +20,8 @@ type Phase = 'setup' | 'playing';
 export default function App() {
   const [phase, setPhase] = useState<Phase>('setup');
   const [humanSide, setHumanSide] = useState<Side>('cho');
-  const [difficulty, setDifficulty] = useState<Difficulty>('normal');
+  // Difficulty is fixed to the strongest level.
+  const difficulty: Difficulty = 'hard';
   const [board, setBoard] = useState<BoardState>(() => initialBoard());
   const [toMove, setToMove] = useState<Side>('cho'); // Cho (bottom) moves first
   const [selected, setSelected] = useState<Pos | null>(null);
@@ -74,17 +75,29 @@ export default function App() {
     [board, selected, legalTargets, doMove, gameOver, thinking, toMove, humanSide]
   );
 
-  // AI turn.
+  // AI turn. Enforce a minimum "thinking" time so the opponent's move is
+  // clearly noticeable after the player moves.
+  const MIN_AI_DELAY = 2000; // ms
   useEffect(() => {
     if (phase !== 'playing') return;
     if (gameOver) return;
     if (toMove !== aiSide) return;
     setThinking(true);
+
+    const startedAt = Date.now();
+    // Give the UI a moment to paint the "thinking" state before the
+    // (synchronous) search runs, then compute the move.
     aiTimer.current = window.setTimeout(() => {
       const move = chooseMove(board, aiSide, difficulty);
-      setThinking(false);
-      if (move) doMove(move);
+      const elapsed = Date.now() - startedAt;
+      const wait = Math.max(0, MIN_AI_DELAY - elapsed);
+      // Wait out the remaining time so total delay is at least MIN_AI_DELAY.
+      aiTimer.current = window.setTimeout(() => {
+        setThinking(false);
+        if (move) doMove(move);
+      }, wait);
     }, 60);
+
     return () => {
       if (aiTimer.current) window.clearTimeout(aiTimer.current);
     };
@@ -100,7 +113,6 @@ export default function App() {
     const hanSetup = human === 'han' ? humanSetup : DEFAULT_SETUP;
 
     setHumanSide(human);
-    setDifficulty(cfg.difficulty);
     setBoard(initialBoard(choSetup, hanSetup));
     setToMove('cho'); // Cho always moves first
     setSelected(null);

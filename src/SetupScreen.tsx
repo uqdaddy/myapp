@@ -1,18 +1,16 @@
 import { useState } from 'react';
-import { Difficulty } from './engine/ai';
 import { Side, SideSetup, WingSetup } from './engine/types';
 
 export interface StartConfig {
   humanSide: Side;
   humanSetup: SideSetup;
-  difficulty: Difficulty;
 }
 
 interface Props {
   onStart: (config: StartConfig) => void;
 }
 
-type Step = 'side' | 'formation' | 'difficulty';
+type Step = 'side' | 'formation';
 
 const WING_LABEL: Record<WingSetup, string> = {
   'horse-outer': '마 / 상',
@@ -24,9 +22,8 @@ export function SetupScreen({ onStart }: Props) {
   const [side, setSide] = useState<Side>('cho');
   const [left, setLeft] = useState<WingSetup>('horse-outer');
   const [right, setRight] = useState<WingSetup>('horse-outer');
-  const [difficulty, setDifficulty] = useState<Difficulty>('normal');
 
-  const stepIndex = step === 'side' ? 0 : step === 'formation' ? 1 : 2;
+  const stepIndex = step === 'side' ? 0 : 1;
 
   return (
     <div className="setup">
@@ -34,8 +31,13 @@ export function SetupScreen({ onStart }: Props) {
       <p className="setup-sub">AI와 대전 · 시작 전에 설정을 골라주세요</p>
 
       <div className="stepper">
-        {['진영', '마·상 배치', '난이도'].map((label, i) => (
-          <div key={label} className={`step-dot ${i === stepIndex ? 'active' : ''} ${i < stepIndex ? 'done' : ''}`}>
+        {['진영', '마·상 배치'].map((label, i) => (
+          <div
+            key={label}
+            className={`step-dot ${i === stepIndex ? 'active' : ''} ${
+              i < stepIndex ? 'done' : ''
+            }`}
+          >
             <span className="step-num">{i + 1}</span>
             <span className="step-label">{label}</span>
           </div>
@@ -109,46 +111,12 @@ export function SetupScreen({ onStart }: Props) {
             <button className="btn" onClick={() => setStep('side')}>
               이전
             </button>
-            <button className="btn primary" onClick={() => setStep('difficulty')}>
-              다음
-            </button>
-          </div>
-        </div>
-      )}
-
-      {step === 'difficulty' && (
-        <div className="setup-card">
-          <h2>난이도</h2>
-          <p className="hint">AI가 앞을 내다보는 수를 조절합니다.</p>
-          <div className="choice-grid three">
-            {(
-              [
-                ['easy', '쉬움', '가볍게'],
-                ['normal', '보통', '제법 둘 만함'],
-                ['hard', '어려움', '더 깊이 계산'],
-              ] as [Difficulty, string, string][]
-            ).map(([d, name, desc]) => (
-              <button
-                key={d}
-                className={`choice ${difficulty === d ? 'active' : ''}`}
-                onClick={() => setDifficulty(d)}
-              >
-                <span className="choice-big">{name}</span>
-                <span className="choice-desc">{desc}</span>
-              </button>
-            ))}
-          </div>
-          <div className="setup-nav two">
-            <button className="btn" onClick={() => setStep('formation')}>
-              이전
-            </button>
             <button
               className="btn primary"
               onClick={() =>
                 onStart({
                   humanSide: side,
                   humanSetup: { left, right },
-                  difficulty,
                 })
               }
             >

@@ -14,8 +14,9 @@ interface Props {
 // (9 columns x 10 rows of points => 8 x 9 cells).
 const COLS = 9;
 const ROWS = 10;
-const MARGIN = 26; // px around the grid
+const MARGIN = 30; // px around the grid
 const GAP = 40; // px between grid lines
+const PAD = 12; // wood border outside the play grid
 
 const W = MARGIN * 2 + GAP * (COLS - 1);
 const H = MARGIN * 2 + GAP * (ROWS - 1);
@@ -38,7 +39,6 @@ const PIECE_RADIUS: Record<PieceType, number> = {
 function octagonPoints(cx: number, cy: number, radius: number): string {
   const pts: string[] = [];
   for (let i = 0; i < 8; i++) {
-    // start at -67.5° so top and bottom are flat edges
     const angle = (Math.PI / 4) * i - Math.PI / 8 - Math.PI / 2;
     const x = cx + radius * Math.cos(angle);
     const y = cy + radius * Math.sin(angle);
@@ -55,27 +55,79 @@ export function Board({
   onCellTap,
   humanSide,
 }: Props) {
-  // When the human plays Han (top side), flip the board 180° so the human's
-  // own pieces are always drawn at the bottom of the screen. This is a pure
-  // display transform; the underlying board coordinates never change.
   const flipped = humanSide === 'han';
-
-  // Map a LOGICAL board coordinate to a SCREEN pixel position.
   const sx = (c: number) => MARGIN + (flipped ? COLS - 1 - c : c) * GAP;
   const sy = (r: number) => MARGIN + (flipped ? ROWS - 1 - r : r) * GAP;
-
-  const targetSet = new Set(legalTargets.map((m) => `${m.to.r},${m.to.c}`));
 
   return (
     <svg
       className="board"
-      viewBox={`0 0 ${W} ${H}`}
+      viewBox={`${-PAD} ${-PAD} ${W + PAD * 2} ${H + PAD * 2}`}
       xmlns="http://www.w3.org/2000/svg"
       role="img"
       aria-label="장기판"
     >
-      {/* wood background */}
-      <rect x={0} y={0} width={W} height={H} rx={8} className="board-bg" />
+      <defs>
+        {/* wood grain gradient for the board */}
+        <linearGradient id="woodGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#e6bd82" />
+          <stop offset="45%" stopColor="#d8a862" />
+          <stop offset="100%" stopColor="#c28f4d" />
+        </linearGradient>
+        <linearGradient id="woodBorder" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#7a4f24" />
+          <stop offset="100%" stopColor="#5c3a18" />
+        </linearGradient>
+        {/* subtle grain streaks */}
+        <linearGradient id="grain" x1="0" y1="0" x2="1" y2="0.15">
+          <stop offset="0%" stopColor="rgba(120,80,30,0)" />
+          <stop offset="50%" stopColor="rgba(120,80,30,0.10)" />
+          <stop offset="100%" stopColor="rgba(120,80,30,0)" />
+        </linearGradient>
+
+        {/* ivory stone face gradient (radial, lit from top-left) */}
+        <radialGradient id="stoneCho" cx="38%" cy="32%" r="75%">
+          <stop offset="0%" stopColor="#fdf3dc" />
+          <stop offset="60%" stopColor="#eeddb6" />
+          <stop offset="100%" stopColor="#d9c193" />
+        </radialGradient>
+        <radialGradient id="stoneHan" cx="38%" cy="32%" r="75%">
+          <stop offset="0%" stopColor="#fdf3dc" />
+          <stop offset="60%" stopColor="#eeddb6" />
+          <stop offset="100%" stopColor="#d9c193" />
+        </radialGradient>
+
+        <filter id="pieceShadow" x="-40%" y="-40%" width="180%" height="180%">
+          <feDropShadow dx="0" dy="2" stdDeviation="1.8" floodColor="#000" floodOpacity="0.45" />
+        </filter>
+        <filter id="boardShadow" x="-10%" y="-10%" width="120%" height="120%">
+          <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#000" floodOpacity="0.4" />
+        </filter>
+      </defs>
+
+      {/* wooden border frame */}
+      <rect
+        x={-PAD}
+        y={-PAD}
+        width={W + PAD * 2}
+        height={H + PAD * 2}
+        rx={10}
+        fill="url(#woodBorder)"
+        filter="url(#boardShadow)"
+      />
+      {/* playing surface */}
+      <rect x={0} y={0} width={W} height={H} rx={4} fill="url(#woodGrad)" />
+      {/* faint grain streaks */}
+      {Array.from({ length: 6 }, (_, i) => (
+        <rect
+          key={`grain${i}`}
+          x={0}
+          y={(H / 6) * i + 6}
+          width={W}
+          height={10}
+          fill="url(#grain)"
+        />
+      ))}
 
       {/* horizontal lines */}
       {Array.from({ length: ROWS }, (_, r) => (
@@ -88,9 +140,12 @@ export function Board({
           className="grid-line"
         />
       ))}
-      {/* vertical lines (river gap in the middle for cols 1..7) */}
+
+      {/* vertical lines: outer columns and the CENTER column run fully;
+          the other inner columns are broken by the river (강). */}
       {Array.from({ length: COLS }, (_, c) => {
-        if (c === 0 || c === COLS - 1) {
+        const full = c === 0 || c === COLS - 1 || c === 4;
+        if (full) {
           return (
             <line
               key={`v${c}`}
@@ -141,7 +196,6 @@ export function Board({
       {board.map((row, r) =>
         row.map((piece, c) => {
           const isSel = selected && selected.r === r && selected.c === c;
-          const isTarget = targetSet.has(`${r},${c}`);
           const px = sx(c);
           const py = sy(r);
           return (
@@ -158,37 +212,44 @@ export function Board({
                 height={GAP}
                 fill="transparent"
               />
-              {piece && (() => {
-                const rad = PIECE_RADIUS[piece.type];
-                const fontSize = rad * 1.15;
-                return (
-                  <g className={isSel ? 'piece-group selected' : 'piece-group'}>
-                    {/* outer bevel ring */}
-                    <polygon
-                      points={octagonPoints(px, py, rad)}
-                      className={`piece-oct piece-${piece.side} ${
-                        isSel ? 'piece-selected' : ''
-                      }`}
-                    />
-                    {/* inner engraved ring */}
-                    <polygon
-                      points={octagonPoints(px, py, rad - 3)}
-                      className={`piece-inner inner-${piece.side}`}
-                    />
-                    <text
-                      x={px}
-                      y={py}
-                      style={{ fontSize }}
-                      className={`piece-label label-${piece.side}`}
-                      textAnchor="middle"
-                      dominantBaseline="central"
+              {piece &&
+                (() => {
+                  const rad = PIECE_RADIUS[piece.type];
+                  const fontSize = rad * 1.15;
+                  return (
+                    <g
+                      className={isSel ? 'piece-group selected' : 'piece-group'}
+                      filter="url(#pieceShadow)"
                     >
-                      {PIECE_LABEL[piece.side][piece.type]}
-                    </text>
-                  </g>
-                );
-              })()}
-              {isTarget && !piece && null}
+                      {/* stone body */}
+                      <polygon
+                        points={octagonPoints(px, py, rad)}
+                        fill={piece.side === 'cho' ? 'url(#stoneCho)' : 'url(#stoneHan)'}
+                        className={`piece-oct ${isSel ? 'piece-selected' : ''}`}
+                      />
+                      {/* outer edge line */}
+                      <polygon
+                        points={octagonPoints(px, py, rad - 0.6)}
+                        className="piece-edge"
+                      />
+                      {/* engraved ring in the side's color */}
+                      <polygon
+                        points={octagonPoints(px, py, rad - 3.2)}
+                        className={`piece-inner inner-${piece.side}`}
+                      />
+                      <text
+                        x={px}
+                        y={py + 0.5}
+                        style={{ fontSize }}
+                        className={`piece-label label-${piece.side}`}
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                      >
+                        {PIECE_LABEL[piece.side][piece.type]}
+                      </text>
+                    </g>
+                  );
+                })()}
             </g>
           );
         })
