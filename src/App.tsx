@@ -123,8 +123,9 @@ export default function App() {
 
   // AI turn — Fairy-Stockfish only (no built-in fallback). A minimum total
   // delay keeps the opponent's move clearly noticeable.
-  const MIN_AI_DELAY = 600; // ms — small floor so a move is visible
-  const AI_TIME_BUDGET = 10000; // ms the engine may think
+  const MIN_AI_DELAY = 400; // ms — small floor so a move is visible
+  const AI_TIME_BUDGET = 2000; // ms the engine may think (Fairy-Stockfish is
+  // strong enough that 2s already plays very well; higher just adds waiting)
   useEffect(() => {
     if (phase !== 'playing') return;
     if (gameOver) return;

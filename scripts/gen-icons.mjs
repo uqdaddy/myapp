@@ -1,79 +1,67 @@
-// Generates simple PNG app icons with no external dependencies.
-// Draws a wood-colored rounded square with a red "楚"-style disc motif.
+// Generates the app icons (PNG) by rendering an SVG of an octagonal Janggi
+// stone with the general character "楚" and rasterizing it with headless Chrome.
+// This replaces the old plain-red-disc icon so the app is recognizable as Janggi.
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { deflateSync } from 'node:zlib';
+import { chromium } from 'playwright-core';
 
-function crc32(buf) {
-  let c = ~0;
-  for (let i = 0; i < buf.length; i++) {
-    c ^= buf[i];
-    for (let k = 0; k < 8; k++) c = (c >>> 1) ^ (0xedb88320 & -(c & 1));
+const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+
+// Octagon points centered in a viewBox of `s`, radius `rad`, flat top/bottom.
+function octagon(cx, cy, rad) {
+  const pts = [];
+  for (let i = 0; i < 8; i++) {
+    const a = (Math.PI / 4) * i - Math.PI / 8 - Math.PI / 2;
+    pts.push(`${(cx + rad * Math.cos(a)).toFixed(1)},${(cy + rad * Math.sin(a)).toFixed(1)}`);
   }
-  return ~c >>> 0;
+  return pts.join(' ');
 }
 
-function chunk(type, data) {
-  const typeBuf = Buffer.from(type, 'ascii');
-  const lenBuf = Buffer.alloc(4);
-  lenBuf.writeUInt32BE(data.length, 0);
-  const crc = crc32(Buffer.concat([typeBuf, data]));
-  const crcBuf = Buffer.alloc(4);
-  crcBuf.writeUInt32BE(crc, 0);
-  return Buffer.concat([lenBuf, typeBuf, data, crcBuf]);
+function svg(size) {
+  const s = size;
+  const cx = s / 2;
+  const cy = s / 2;
+  const outer = octagon(cx, cy, s * 0.46);
+  const rim = octagon(cx, cy, s * 0.4);
+  const face = octagon(cx, cy, s * 0.37);
+  const ring = octagon(cx, cy, s * 0.31);
+  const fontSize = s * 0.5;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 ${s} ${s}">
+  <defs>
+    <radialGradient id="face" cx="38%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#fff7e6"/>
+      <stop offset="55%" stop-color="#f2ddb0"/>
+      <stop offset="100%" stop-color="#d9bd83"/>
+    </radialGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e6c98f"/>
+      <stop offset="100%" stop-color="#8a6a3a"/>
+    </linearGradient>
+  </defs>
+  <rect width="${s}" height="${s}" rx="${s * 0.22}" fill="#7a4f24"/>
+  <polygon points="${outer}" fill="#5c3a18"/>
+  <polygon points="${rim}" fill="url(#rim)"/>
+  <polygon points="${face}" fill="url(#face)" stroke="#6b4a22" stroke-width="${s * 0.006}"/>
+  <polygon points="${ring}" fill="none" stroke="#9e1515" stroke-width="${s * 0.02}"/>
+  <text x="${cx}" y="${cy + fontSize * 0.03}" text-anchor="middle" dominant-baseline="central"
+        font-family="'Nanum Myeongjo','Apple SD Gothic Neo',serif" font-weight="900"
+        font-size="${fontSize}" fill="#9e1515">楚</text>
+</svg>`;
 }
 
-function makePng(size, draw) {
-  const bytesPerPixel = 4;
-  const rowLen = size * bytesPerPixel;
-  const raw = Buffer.alloc((rowLen + 1) * size);
-  for (let y = 0; y < size; y++) {
-    raw[y * (rowLen + 1)] = 0; // filter type 0
-    for (let x = 0; x < size; x++) {
-      const [r, g, b, a] = draw(x, y, size);
-      const off = y * (rowLen + 1) + 1 + x * bytesPerPixel;
-      raw[off] = r;
-      raw[off + 1] = g;
-      raw[off + 2] = b;
-      raw[off + 3] = a;
-    }
+async function main() {
+  mkdirSync('public', { recursive: true });
+  const browser = await chromium.launch({ executablePath: CHROME, headless: true });
+  for (const size of [192, 512]) {
+    const page = await browser.newPage({ viewport: { width: size, height: size } });
+    const html = `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0}</style></head><body>${svg(size)}</body></html>`;
+    await page.setContent(html, { waitUntil: 'networkidle' });
+    const el = await page.$('svg');
+    const buf = await el.screenshot({ omitBackground: true });
+    writeFileSync(`public/icon-${size}.png`, buf);
+    console.log(`wrote public/icon-${size}.png (${buf.length} bytes)`);
+    await page.close();
   }
-  const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(size, 0);
-  ihdr.writeUInt32BE(size, 4);
-  ihdr[8] = 8; // bit depth
-  ihdr[9] = 6; // color type RGBA
-  ihdr[10] = 0;
-  ihdr[11] = 0;
-  ihdr[12] = 0;
-  const idat = deflateSync(raw);
-  return Buffer.concat([
-    sig,
-    chunk('IHDR', ihdr),
-    chunk('IDAT', idat),
-    chunk('IEND', Buffer.alloc(0)),
-  ]);
+  await browser.close();
 }
 
-function draw(x, y, size) {
-  const cx = size / 2;
-  const cy = size / 2;
-  const r = Math.hypot(x - cx, y - cy);
-  const radius = size * 0.5;
-  // rounded-ish: fill whole square with wood, inner red disc
-  const wood = [200, 150, 90, 255];
-  const disc = [176, 32, 32, 255];
-  const ring = [247, 237, 214, 255];
-  const discR = size * 0.34;
-  const ringR = size * 0.38;
-  if (r < discR) return disc;
-  if (r < ringR) return ring;
-  return wood;
-}
-
-mkdirSync('public', { recursive: true });
-for (const size of [192, 512]) {
-  const png = makePng(size, draw);
-  writeFileSync(`public/icon-${size}.png`, png);
-  console.log(`wrote public/icon-${size}.png (${png.length} bytes)`);
-}
+main();
