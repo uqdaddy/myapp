@@ -107,8 +107,8 @@ export function chooseMove(
     return topK[Math.floor(Math.random() * topK.length)].m;
   }
 
-  let best: Move | null = null;
   let bestScore = -Infinity;
+  let bestMoves: Move[] = [];
   let alpha = -Infinity;
   const beta = Infinity;
   const ordered = orderMoves(moves);
@@ -117,9 +117,14 @@ export function chooseMove(
     const score = -negamax(next, opponent(side), depth - 1, -beta, -alpha);
     if (score > bestScore) {
       bestScore = score;
-      best = move;
+      bestMoves = [move];
+    } else if (score === bestScore) {
+      // collect ties so we can pick randomly among equally good moves,
+      // which keeps openings varied instead of always the same move.
+      bestMoves.push(move);
     }
     if (score > alpha) alpha = score;
   }
-  return best;
+  if (bestMoves.length === 0) return null;
+  return bestMoves[Math.floor(Math.random() * bestMoves.length)];
 }

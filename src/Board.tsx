@@ -20,13 +20,6 @@ const GAP = 40; // px between grid lines
 const W = MARGIN * 2 + GAP * (COLS - 1);
 const H = MARGIN * 2 + GAP * (ROWS - 1);
 
-function x(c: number) {
-  return MARGIN + c * GAP;
-}
-function y(r: number) {
-  return MARGIN + r * GAP;
-}
-
 export function Board({
   board,
   selected,
@@ -35,6 +28,15 @@ export function Board({
   onCellTap,
   humanSide,
 }: Props) {
+  // When the human plays Han (top side), flip the board 180° so the human's
+  // own pieces are always drawn at the bottom of the screen. This is a pure
+  // display transform; the underlying board coordinates never change.
+  const flipped = humanSide === 'han';
+
+  // Map a LOGICAL board coordinate to a SCREEN pixel position.
+  const sx = (c: number) => MARGIN + (flipped ? COLS - 1 - c : c) * GAP;
+  const sy = (r: number) => MARGIN + (flipped ? ROWS - 1 - r : r) * GAP;
+
   const targetSet = new Set(legalTargets.map((m) => `${m.to.r},${m.to.c}`));
 
   return (
@@ -52,10 +54,10 @@ export function Board({
       {Array.from({ length: ROWS }, (_, r) => (
         <line
           key={`h${r}`}
-          x1={x(0)}
-          y1={y(r)}
-          x2={x(COLS - 1)}
-          y2={y(r)}
+          x1={sx(0)}
+          y1={sy(r)}
+          x2={sx(COLS - 1)}
+          y2={sy(r)}
           className="grid-line"
         />
       ))}
@@ -65,18 +67,18 @@ export function Board({
           return (
             <line
               key={`v${c}`}
-              x1={x(c)}
-              y1={y(0)}
-              x2={x(c)}
-              y2={y(ROWS - 1)}
+              x1={sx(c)}
+              y1={sy(0)}
+              x2={sx(c)}
+              y2={sy(ROWS - 1)}
               className="grid-line"
             />
           );
         }
         return (
           <g key={`v${c}`}>
-            <line x1={x(c)} y1={y(0)} x2={x(c)} y2={y(4)} className="grid-line" />
-            <line x1={x(c)} y1={y(5)} x2={x(c)} y2={y(ROWS - 1)} className="grid-line" />
+            <line x1={sx(c)} y1={sy(0)} x2={sx(c)} y2={sy(4)} className="grid-line" />
+            <line x1={sx(c)} y1={sy(5)} x2={sx(c)} y2={sy(ROWS - 1)} className="grid-line" />
           </g>
         );
       })}
@@ -84,16 +86,16 @@ export function Board({
       {/* palace diagonals */}
       {[0, 7].map((base) => (
         <g key={`palace${base}`}>
-          <line x1={x(3)} y1={y(base)} x2={x(5)} y2={y(base + 2)} className="grid-line" />
-          <line x1={x(5)} y1={y(base)} x2={x(3)} y2={y(base + 2)} className="grid-line" />
+          <line x1={sx(3)} y1={sy(base)} x2={sx(5)} y2={sy(base + 2)} className="grid-line" />
+          <line x1={sx(5)} y1={sy(base)} x2={sx(3)} y2={sy(base + 2)} className="grid-line" />
         </g>
       ))}
 
       {/* last move highlight */}
       {lastMove && (
         <>
-          <circle cx={x(lastMove.from.c)} cy={y(lastMove.from.r)} r={16} className="last-from" />
-          <circle cx={x(lastMove.to.c)} cy={y(lastMove.to.r)} r={16} className="last-to" />
+          <circle cx={sx(lastMove.from.c)} cy={sy(lastMove.from.r)} r={16} className="last-from" />
+          <circle cx={sx(lastMove.to.c)} cy={sy(lastMove.to.r)} r={16} className="last-to" />
         </>
       )}
 
@@ -101,18 +103,20 @@ export function Board({
       {legalTargets.map((m) => (
         <circle
           key={`t${m.to.r}-${m.to.c}`}
-          cx={x(m.to.c)}
-          cy={y(m.to.r)}
+          cx={sx(m.to.c)}
+          cy={sy(m.to.r)}
           r={m.captured ? 17 : 7}
           className={m.captured ? 'target-capture' : 'target-dot'}
         />
       ))}
 
-      {/* pieces + tap zones */}
+      {/* pieces + tap zones (iterate LOGICAL cells; tap passes logical coords) */}
       {board.map((row, r) =>
         row.map((piece, c) => {
           const isSel = selected && selected.r === r && selected.c === c;
           const isTarget = targetSet.has(`${r},${c}`);
+          const px = sx(c);
+          const py = sy(r);
           return (
             <g
               key={`cell${r}-${c}`}
@@ -121,8 +125,8 @@ export function Board({
             >
               {/* invisible tap area covering the full cell */}
               <rect
-                x={x(c) - GAP / 2}
-                y={y(r) - GAP / 2}
+                x={px - GAP / 2}
+                y={py - GAP / 2}
                 width={GAP}
                 height={GAP}
                 fill="transparent"
@@ -130,14 +134,14 @@ export function Board({
               {piece && (
                 <g>
                   <circle
-                    cx={x(c)}
-                    cy={y(r)}
+                    cx={px}
+                    cy={py}
                     r={17}
                     className={`piece piece-${piece.side} ${isSel ? 'piece-selected' : ''}`}
                   />
                   <text
-                    x={x(c)}
-                    y={y(r)}
+                    x={px}
+                    y={py}
                     className={`piece-label label-${piece.side}`}
                     textAnchor="middle"
                     dominantBaseline="central"
@@ -151,11 +155,6 @@ export function Board({
           );
         })
       )}
-
-      {/* side hint markers */}
-      <text x={x(0)} y={y(0) - 14} className="side-hint">
-        {humanSide === 'han' ? '' : '한(漢)'}
-      </text>
     </svg>
   );
 }
