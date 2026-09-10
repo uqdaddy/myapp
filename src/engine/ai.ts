@@ -211,21 +211,47 @@ function positionalTerms(board: Board, side: Side): number {
   return s;
 }
 
-// Lightweight mobility: count pseudo-legal moves for the side's mobile pieces.
-// Chariots and cannons benefit most from open lines, so weight them.
-function mobilityTerm(board: Board, side: Side): number {
-  let m = 0;
+// Mobility + tactical threats in a SINGLE move-generation pass (one
+// pseudoMovesFor call per piece) to keep evaluation cheap:
+//   - mobility: weighted count of moves (chariots/cannons value open lines)
+//   - threats:  attacking enemy pieces, with a fork bonus for double attacks,
+//     which lets the engine seek 양걸이 and (with the check bonus) 장군+걸이.
+function activityTerms(board: Board, side: Side): { mobility: number; threats: number } {
+  const foe = side === 'cho' ? 'han' : 'cho';
+  let mobility = 0;
+  let threats = 0;
+
   for (let r = 0; r < board.length; r++) {
     for (let c = 0; c < board[r].length; c++) {
       const p = board[r][c];
       if (!p || p.side !== side) continue;
       if (p.type === 'guard' || p.type === 'general') continue;
-      const count = pseudoMovesFor(board, { r, c }).length;
+
+      const moves = pseudoMovesFor(board, { r, c });
       const w = p.type === 'chariot' ? 1.2 : p.type === 'cannon' ? 1.0 : 0.5;
-      m += count * w;
+      mobility += moves.length * w;
+
+      const attackerVal = VALUES[p.type];
+      let hereworth = 0;
+      let significant = 0;
+      for (const m of moves) {
+        if (!m.captured || m.captured.side !== foe) continue;
+        // Attacking the enemy general is "check", handled separately by the
+        // check bonus — do not treat it as a huge material threat here.
+        if (m.captured.type === 'general') continue;
+        const victimVal = VALUES[m.captured.type];
+        if (victimVal >= attackerVal) {
+          hereworth += victimVal * 0.12;
+          significant++;
+        } else {
+          hereworth += victimVal * 0.04;
+        }
+      }
+      if (significant >= 2) hereworth += 50; // fork bonus
+      threats += hereworth;
     }
   }
-  return m;
+  return { mobility, threats };
 }
 
 // King safety: reward guards/general clustered in the palace, penalize an
@@ -264,14 +290,15 @@ function sideScore(board: Board, side: Side): number {
     }
   }
   const positional = positionalTerms(board, side);
-  const mobility = mobilityTerm(board, side);
   const safety = kingSafety(board, side);
-  // Positional terms (PST + development + mobility + king safety) must only
-  // ever be a tie-breaker. Material dominates so the engine never prefers a
-  // nicer square over winning or keeping a piece. The whole positional bundle
-  // is scaled well below the value of a single soldier (18).
+  const { mobility, threats } = activityTerms(board, side);
+  // Positional terms (PST + development + mobility + king safety) are only a
+  // tie-breaker: scaled well below a single piece so material dominates.
   const positionalBundle = pst + positional + mobility * 0.35 + safety;
-  return material + positionalBundle * 0.12;
+  // Threats (attacking / forking enemy pieces) represent potential material, so
+  // they carry more weight than pure positional terms — but conservatively, so
+  // the engine won't over-extend or sacrifice a piece just to threaten.
+  return material + positionalBundle * 0.12 + threats * 0.3;
 }
 
 function evaluate(board: Board, side: Side): number {
@@ -534,8 +561,8 @@ export function chooseMove(
 
     bestNearTop = candidates.filter((c) => c.score >= bestScore - 1).map((c) => c.move);
 
-    // If we found a forced win, no need to search deeper.
-    if (bestScore >= VALUES.general) break;
+    // If we found a clearly forced mate, no need to search deeper.
+    if (bestScore >= VALUES.general - 1000) break;
     if (Date.now() >= st.deadline) break;
   }
 
