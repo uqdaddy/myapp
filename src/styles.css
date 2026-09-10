@@ -98,7 +98,7 @@ body {
   font-size: 34px;
   font-weight: 900;
   letter-spacing: 2px;
-  font-family: 'Nanum Myeongjo', 'Apple SD Gothic Neo', serif;
+  /* use the app's default UI font so it matches the rest of the interface */
 }
 .result-card.win .result-title {
   color: #0a6d3a;

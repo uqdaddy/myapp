@@ -202,10 +202,10 @@ export default function App() {
 
   const statusText = useMemo(() => {
     if (status.kind === 'checkmate') {
-      return status.winner === humanSide ? '외통수! 승리했습니다 🎉' : '외통수… 패배했습니다';
+      return status.winner === humanSide ? '외통수! 승리했습니다' : '외통수… 패배했습니다';
     }
     if (status.kind === 'stalemate') {
-      return status.winner === humanSide ? '상대가 둘 수 없습니다. 승리! 🎉' : '둘 곳이 없습니다. 패배…';
+      return status.winner === humanSide ? '상대가 둘 수 없습니다. 승리!' : '둘 곳이 없습니다. 패배…';
     }
     const turn = toMove === humanSide ? '내 차례' : 'AI 차례';
     const check = status.check ? ' · 장군!' : '';
@@ -221,7 +221,7 @@ export default function App() {
       return {
         win,
         title: win ? '승리!' : '패배',
-        detail: win ? '외통수로 이겼습니다 🎉' : '외통수… 아쉽네요',
+        detail: win ? '외통수로 이겼습니다' : '외통수… 아쉽네요',
       };
     }
     if (status.kind === 'stalemate') {
@@ -229,7 +229,7 @@ export default function App() {
       return {
         win,
         title: win ? '승리!' : '패배',
-        detail: win ? '상대가 둘 수 없습니다 🎉' : '둘 곳이 없습니다',
+        detail: win ? '상대가 둘 수 없습니다' : '둘 곳이 없습니다',
       };
     }
     return null;
