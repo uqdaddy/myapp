@@ -6,50 +6,61 @@ export const DEFAULT_SETUP: SideSetup = {
   right: 'horse-outer',
 };
 
-// Build a back rank (9 columns) for the given side and formation.
+// Build a back rank (9 columns, board space) for the given side + formation.
 //
-// Column layout (board space, cols 0..8):
-//   0: chariot
-//   1,2: LEFT wing pair  (outer=1, inner=2)
-//   3: guard
-//   4: general slot (empty on back rank; general sits on palace middle row)
-//   5: guard
-//   6,7: RIGHT wing pair (inner=6, outer=7)
-//   8: chariot
+// The setup labels are read AS THE PLAYER SEES THEM ON SCREEN, left→right
+// within each wing pair. A wing value of 'horse-outer' means the label "마/상":
+// the left square of that pair (on screen) is the Horse, the right is the
+// Elephant. 'elephant-outer' means "상/마".
 //
-// `setup` is expressed in the PLAYER'S OWN perspective (their left / right).
-// For Cho (bottom) the player's left maps to board cols 1,2 and right to 6,7.
-// For Han (top) the board is mirrored, so the player's left maps to the
-// board's right pair (6,7) and vice versa.
+// Screen ↔ board mapping:
+//   - Cho (bottom, not flipped): screen col == board col.
+//       left wing pair  = board cols (1,2), screen-left square = col 1
+//       right wing pair = board cols (6,7), screen-left square = col 6
+//   - Han (top, flipped 180° for display): screen col == 8 - board col.
+//     So a Han player's LEFT wing sits on the board's RIGHT pair, and within
+//     a pair the higher board col is the screen-left square. We build the
+//     board rank so that, once flipped for display, it reads correctly.
 function backRank(side: Side, setup: SideSetup): (Piece | null)[] {
   const p = (type: Piece['type']): Piece => ({ type, side });
 
-  // Resolve which wing setup applies to the board's left pair (cols 1,2)
-  // and right pair (cols 6,7), accounting for Han's mirrored view.
-  const boardLeftWing: WingSetup = side === 'cho' ? setup.left : setup.right;
-  const boardRightWing: WingSetup = side === 'cho' ? setup.right : setup.left;
-
-  // Given a wing setup, return [outerPiece, innerPiece].
+  // For a wing labelled left→right on screen, return [screenLeft, screenRight].
   const wingPieces = (w: WingSetup): [Piece, Piece] =>
     w === 'horse-outer' ? [p('horse'), p('elephant')] : [p('elephant'), p('horse')];
 
-  const [leftOuter, leftInner] = wingPieces(boardLeftWing); // cols 1,2
-  const [rightInner, rightOuter] = (() => {
-    const [outer, inner] = wingPieces(boardRightWing);
-    return [inner, outer]; // right wing: inner is col 6, outer is col 7
-  })();
-
-  return [
+  const rank: (Piece | null)[] = [
     p('chariot'), // 0
-    leftOuter, // 1
-    leftInner, // 2
+    null, // 1
+    null, // 2
     p('guard'), // 3
     null, // 4 (general placed separately)
     p('guard'), // 5
-    rightInner, // 6
-    rightOuter, // 7
+    null, // 6
+    null, // 7
     p('chariot'), // 8
   ];
+
+  if (side === 'cho') {
+    // Not flipped: screen col == board col. Fill each pair left→right.
+    const [lL, lR] = wingPieces(setup.left); // board cols 1,2
+    const [rL, rR] = wingPieces(setup.right); // board cols 6,7
+    rank[1] = lL;
+    rank[2] = lR;
+    rank[6] = rL;
+    rank[7] = rR;
+  } else {
+    // Han is displayed flipped, so screen-left is the higher board col.
+    // Player's LEFT wing -> board cols (7,6) with screen-left = col 7.
+    // Player's RIGHT wing -> board cols (2,1) with screen-left = col 2.
+    const [lL, lR] = wingPieces(setup.left);
+    const [rL, rR] = wingPieces(setup.right);
+    rank[7] = lL; // screen-left of player's left wing
+    rank[6] = lR;
+    rank[2] = rL; // screen-left of player's right wing
+    rank[1] = rR;
+  }
+
+  return rank;
 }
 
 export function initialBoard(

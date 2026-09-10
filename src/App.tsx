@@ -2,10 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Board } from './Board';
 import { CapturedTray } from './CapturedTray';
 import { SetupScreen, StartConfig } from './SetupScreen';
-import { initialBoard, DEFAULT_SETUP } from './engine/board';
+import { initialBoard } from './engine/board';
 import { applyMove, legalMovesFor } from './engine/moves';
 import { getStatus } from './engine/game';
-import { chooseMove, Difficulty } from './engine/ai';
+import { chooseMove, chooseSetup, Difficulty } from './engine/ai';
 import { openingMove, OPENING_PLIES } from './engine/openings';
 import type { AiRequest, AiResponse } from './engine/aiWorker';
 import { materialScore, capturedByOpponentOf } from './engine/score';
@@ -174,8 +174,11 @@ export default function App() {
     if (aiTimer.current) window.clearTimeout(aiTimer.current);
     const human = cfg.humanSide;
     const humanSetup: SideSetup = cfg.humanSetup;
-    const choSetup = human === 'cho' ? humanSetup : DEFAULT_SETUP;
-    const hanSetup = human === 'han' ? humanSetup : DEFAULT_SETUP;
+    // The AI picks its own wing formation based on the human's choice.
+    const aiSideLocal = opponent(human);
+    const aiSetup = chooseSetup(aiSideLocal, human, humanSetup);
+    const choSetup = human === 'cho' ? humanSetup : aiSetup;
+    const hanSetup = human === 'han' ? humanSetup : aiSetup;
 
     setHumanSide(human);
     setBoard(initialBoard(choSetup, hanSetup));

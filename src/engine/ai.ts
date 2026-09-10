@@ -1,5 +1,7 @@
 import { Board, Move, PieceType, Side, inPalace, opponent } from './types';
 import { allLegalMoves, applyMove, isInCheck, pseudoMovesFor, findGeneral } from './moves';
+import { initialBoard } from './board';
+import type { SideSetup, WingSetup } from './types';
 
 // ---------------------------------------------------------------------------
 // Material values, tuned to reflect real Janggi piece strength.
@@ -529,4 +531,53 @@ export function chooseMove(
   }
 
   return bestNearTop[Math.floor(Math.random() * bestNearTop.length)];
+}
+
+
+// ---------------------------------------------------------------------------
+// AI wing-formation selection. Given the human's side and chosen formation,
+// the AI evaluates all four of its own wing setups (마/상 × 마/상 on each wing)
+// with a shallow search and picks the one that looks best for itself. This
+// makes the AI vary its formation and respond to the player's choice.
+// ---------------------------------------------------------------------------
+const WING_OPTIONS: WingSetup[] = ['horse-outer', 'elephant-outer'];
+
+export function chooseSetup(
+  aiSide: Side,
+  humanSide: Side,
+  humanSetup: SideSetup
+): SideSetup {
+  const options: SideSetup[] = [];
+  for (const left of WING_OPTIONS) {
+    for (const right of WING_OPTIONS) options.push({ left, right });
+  }
+
+  let bestScore = -Infinity;
+  let best: SideSetup[] = [options[0]];
+
+  for (const aiSetup of options) {
+    const choSetup = humanSide === 'cho' ? humanSetup : aiSetup;
+    const hanSetup = humanSide === 'han' ? humanSetup : aiSetup;
+    const board = initialBoard(choSetup, hanSetup);
+
+    // Shallow search from the position after setup, scored for the AI side.
+    const st = new SearchState();
+    st.deadline = Date.now() + 300; // small budget; setup eval is not deep
+    let score: number;
+    try {
+      score = negamax(board, aiSide, 2, -Infinity, Infinity, 0, st);
+    } catch {
+      score = evaluate(board, aiSide);
+    }
+
+    if (score > bestScore + 0.5) {
+      bestScore = score;
+      best = [aiSetup];
+    } else if (Math.abs(score - bestScore) <= 0.5) {
+      best.push(aiSetup);
+    }
+  }
+
+  // Random tie-break among near-equal setups for variety.
+  return best[Math.floor(Math.random() * best.length)];
 }
