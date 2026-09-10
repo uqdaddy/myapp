@@ -585,15 +585,31 @@ body {
 }
 .inapp-steps {
   text-align: left;
-  margin: 14px auto 0;
+  margin: 10px auto 0;
   padding-left: 22px;
-  max-width: 280px;
+  max-width: 300px;
   font-size: 14px;
   line-height: 1.9;
   color: #e7d9bd;
 }
 .inapp-steps b {
   color: #f0d9a8;
+}
+.inapp-primary {
+  margin-top: 16px;
+  padding: 14px;
+  background: #3a322d;
+  border: 1px solid #5a4d43;
+  border-radius: 12px;
+}
+.inapp-primary-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #f0d9a8;
+  text-align: center;
+}
+.inapp-icon {
+  margin: 0 3px;
 }
 .inapp-url {
   margin-top: 16px;

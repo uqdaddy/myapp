@@ -58,19 +58,26 @@ export function InAppNotice() {
           </>
         ) : (
           <>
-            {/* Primary, most reliable path on iOS: copy the URL, then paste in Safari */}
-            <button className="btn primary inapp-btn" onClick={copyUrl}>
-              {copied ? '✓ 주소가 복사됐어요' : '① 주소 복사하기'}
+            {/* Primary path on iOS Kakao in-app browser: bottom share -> Safari.
+                This opens THIS page directly in Safari; no copy/paste needed. */}
+            <div className="inapp-primary">
+              <div className="inapp-primary-title">사파리로 여는 방법</div>
+              <ol className="inapp-steps">
+                <li>
+                  이 화면 <b>오른쪽 아래의 공유 아이콘</b>
+                  <span className="inapp-icon">⬆️</span>을 누르세요
+                </li>
+                <li>
+                  메뉴에서 <b>“Safari로 열기”</b>를 선택하면 이 페이지가 바로 열립니다
+                </li>
+              </ol>
+            </div>
+
+            {/* Fallback: copy the URL and paste into Safari manually. */}
+            <p className="inapp-hint">위 방법이 안 되면 주소를 복사해 사파리에 붙여넣으세요.</p>
+            <button className="btn inapp-btn" onClick={copyUrl}>
+              {copied ? '✓ 주소가 복사됐어요' : '주소 복사하기'}
             </button>
-            <ol className="inapp-steps">
-              <li>위 버튼으로 <b>주소를 복사</b></li>
-              <li><b>사파리(Safari)</b> 앱을 직접 실행</li>
-              <li>주소창을 길게 눌러 <b>붙여넣기 → 이동</b></li>
-            </ol>
-            <p className="inapp-hint">
-              또는 이 화면 <b>오른쪽 아래의 사파리(나침반) 아이콘</b>을 누르면 바로
-              열립니다. (없으면 오른쪽 위 <b>⋯</b> → <b>Safari로 열기</b>)
-            </p>
           </>
         )}
 
