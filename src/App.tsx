@@ -6,6 +6,7 @@ import { initialBoard, DEFAULT_SETUP } from './engine/board';
 import { applyMove, legalMovesFor } from './engine/moves';
 import { getStatus } from './engine/game';
 import { chooseMove, Difficulty } from './engine/ai';
+import { openingMove, OPENING_PLIES } from './engine/openings';
 import type { AiRequest, AiResponse } from './engine/aiWorker';
 import { materialScore, capturedByOpponentOf } from './engine/score';
 import { Board as BoardState, Move, Pos, Side, SideSetup, opponent } from './engine/types';
@@ -36,6 +37,7 @@ export default function App() {
   const aiSide = opponent(humanSide);
   const aiTimer = useRef<number | null>(null);
   const workerRef = useRef<Worker | null>(null);
+  const aiMoveCount = useRef(0); // how many moves the AI has made this game
 
   // Create the search worker once (runs the heavy AI off the main thread so
   // the UI never freezes while the AI thinks).
@@ -117,7 +119,10 @@ export default function App() {
       aiTimer.current = window.setTimeout(() => {
         if (cancelled) return;
         setThinking(false);
-        if (move) doMove(move);
+        if (move) {
+          aiMoveCount.current += 1;
+          doMove(move);
+        }
       }, wait);
     };
 
@@ -134,6 +139,7 @@ export default function App() {
         difficulty,
         timeMs: AI_TIME_BUDGET,
         maxDepth: AI_MAX_DEPTH,
+        aiMoveNumber: aiMoveCount.current,
       };
       worker.postMessage(req);
       return () => {
@@ -145,10 +151,16 @@ export default function App() {
 
     // Fallback: no worker available -> compute on the main thread.
     aiTimer.current = window.setTimeout(() => {
-      const move = chooseMove(board, aiSide, difficulty, {
-        timeMs: AI_TIME_BUDGET,
-        maxDepth: AI_MAX_DEPTH,
-      });
+      let move: Move | null = null;
+      if (aiMoveCount.current < OPENING_PLIES) {
+        move = openingMove(board, aiSide, aiMoveCount.current);
+      }
+      if (!move) {
+        move = chooseMove(board, aiSide, difficulty, {
+          timeMs: AI_TIME_BUDGET,
+          maxDepth: AI_MAX_DEPTH,
+        });
+      }
       applyResult(move);
     }, 60);
     return () => {
@@ -171,6 +183,7 @@ export default function App() {
     setSelected(null);
     setLastMove(null);
     setThinking(false);
+    aiMoveCount.current = 0; // reset opening-book counter for the new game
     setPhase('playing');
   }, []);
 
