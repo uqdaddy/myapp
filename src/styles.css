@@ -746,22 +746,22 @@ body {
   }
 }
 
-/* Always reserves the same height so toggling "장군!" never moves the board. */
+/* Floating banner OVER the board (absolute) — takes no layout space, so it
+   never pushes the board or the bottom buttons down. */
 .check-banner {
-  margin: 0 12px 6px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  padding: 6px 16px;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
-  color: transparent;
-  background: transparent;
-}
-.check-banner.active {
   color: #fff;
   background: #c62828;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
   animation: bannerFlash 0.8s ease-in-out infinite alternate;
 }
 @keyframes bannerFlash {
