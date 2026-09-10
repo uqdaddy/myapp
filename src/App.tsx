@@ -6,6 +6,7 @@ import { initialBoard, DEFAULT_SETUP } from './engine/board';
 import { applyMove, legalMovesFor } from './engine/moves';
 import { getStatus } from './engine/game';
 import { chooseMove, Difficulty } from './engine/ai';
+import type { AiRequest, AiResponse } from './engine/aiWorker';
 import { materialScore, capturedByOpponentOf } from './engine/score';
 import { Board as BoardState, Move, Pos, Side, SideSetup, opponent } from './engine/types';
 
@@ -34,6 +35,20 @@ export default function App() {
 
   const aiSide = opponent(humanSide);
   const aiTimer = useRef<number | null>(null);
+  const workerRef = useRef<Worker | null>(null);
+
+  // Create the search worker once (runs the heavy AI off the main thread so
+  // the UI never freezes while the AI thinks).
+  useEffect(() => {
+    const worker = new Worker(new URL('./engine/aiWorker.ts', import.meta.url), {
+      type: 'module',
+    });
+    workerRef.current = worker;
+    return () => {
+      worker.terminate();
+      workerRef.current = null;
+    };
+  }, []);
 
   // Scores and captured pieces derived from the current board.
   const humanScore = useMemo(() => materialScore(board, humanSide), [board, humanSide]);
@@ -81,9 +96,10 @@ export default function App() {
     [board, selected, legalTargets, doMove, gameOver, thinking, toMove, humanSide]
   );
 
-  // AI turn. Enforce a minimum "thinking" time so the opponent's move is
-  // clearly noticeable after the player moves.
+  // AI turn. The worker searches with a time budget; we also enforce a minimum
+  // total delay so the opponent's move is clearly noticeable after the player.
   const MIN_AI_DELAY = 2000; // ms
+  const AI_TIME_BUDGET = 2500; // ms of search the worker is allowed
   useEffect(() => {
     if (phase !== 'playing') return;
     if (gameOver) return;
@@ -91,17 +107,47 @@ export default function App() {
     setThinking(true);
 
     const startedAt = Date.now();
-    aiTimer.current = window.setTimeout(() => {
-      const move = chooseMove(board, aiSide, difficulty);
+    let cancelled = false;
+
+    const applyResult = (move: Move | null) => {
+      if (cancelled) return;
       const elapsed = Date.now() - startedAt;
       const wait = Math.max(0, MIN_AI_DELAY - elapsed);
       aiTimer.current = window.setTimeout(() => {
+        if (cancelled) return;
         setThinking(false);
         if (move) doMove(move);
       }, wait);
-    }, 60);
+    };
 
+    const worker = workerRef.current;
+    if (worker) {
+      const onMessage = (e: MessageEvent<AiResponse>) => {
+        worker.removeEventListener('message', onMessage);
+        applyResult(e.data.move);
+      };
+      worker.addEventListener('message', onMessage);
+      const req: AiRequest = {
+        board,
+        side: aiSide,
+        difficulty,
+        timeMs: AI_TIME_BUDGET,
+      };
+      worker.postMessage(req);
+      return () => {
+        cancelled = true;
+        worker.removeEventListener('message', onMessage);
+        if (aiTimer.current) window.clearTimeout(aiTimer.current);
+      };
+    }
+
+    // Fallback: no worker available -> compute on the main thread.
+    aiTimer.current = window.setTimeout(() => {
+      const move = chooseMove(board, aiSide, difficulty, { timeMs: AI_TIME_BUDGET });
+      applyResult(move);
+    }, 60);
     return () => {
+      cancelled = true;
       if (aiTimer.current) window.clearTimeout(aiTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -144,6 +190,27 @@ export default function App() {
 
   const inCheck = status.kind === 'playing' && status.check;
 
+  // Game-over result for the overlay popup.
+  const endResult = useMemo(() => {
+    if (status.kind === 'checkmate') {
+      const win = status.winner === humanSide;
+      return {
+        win,
+        title: win ? '승리!' : '패배',
+        detail: win ? '외통수로 이겼습니다 🎉' : '외통수… 아쉽네요',
+      };
+    }
+    if (status.kind === 'stalemate') {
+      const win = status.winner === humanSide;
+      return {
+        win,
+        title: win ? '승리!' : '패배',
+        detail: win ? '상대가 둘 수 없습니다 🎉' : '둘 곳이 없습니다',
+      };
+    }
+    return null;
+  }, [status, humanSide]);
+
   if (phase === 'setup') {
     return <SetupScreen onStart={startGame} />;
   }
@@ -171,6 +238,18 @@ export default function App() {
           onCellTap={onCellTap}
           humanSide={humanSide}
         />
+
+        {endResult && (
+          <div className="result-overlay">
+            <div className={`result-card ${endResult.win ? 'win' : 'lose'}`}>
+              <div className="result-title">{endResult.title}</div>
+              <div className="result-detail">{endResult.detail}</div>
+              <button className="btn primary result-btn" onClick={backToSetup}>
+                새 게임
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Human tray at the bottom: shows pieces the player captured. */}
