@@ -211,3 +211,160 @@ body {
   color: #8a7a63;
   padding: 4px 0 8px;
 }
+
+/* ---- Playing view: board-only layout ---- */
+.status-bar {
+  text-align: center;
+  padding: 14px 12px 10px;
+  font-size: 16px;
+  color: #e7d9bd;
+  min-height: 22px;
+}
+.status-bar.status-check {
+  color: #ff8f6b;
+  font-weight: 700;
+}
+
+.game-actions {
+  padding: 4px 12px calc(env(safe-area-inset-bottom) + 14px);
+}
+.game-actions .btn {
+  width: 100%;
+}
+
+/* ---- Setup / start screen ---- */
+.setup {
+  max-width: 440px;
+  margin: 0 auto;
+  padding: calc(env(safe-area-inset-top) + 24px) 18px
+    calc(env(safe-area-inset-bottom) + 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100dvh;
+}
+
+.setup-title {
+  margin: 0;
+  text-align: center;
+  font-size: 30px;
+  letter-spacing: 3px;
+  color: #f0d9a8;
+}
+.setup-sub {
+  margin: 0;
+  text-align: center;
+  color: #b6a488;
+  font-size: 14px;
+}
+
+.stepper {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 4px;
+}
+.step-dot {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  opacity: 0.45;
+}
+.step-dot.active,
+.step-dot.done {
+  opacity: 1;
+}
+.step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #5a4d43;
+  color: #f3ecdf;
+  font-size: 13px;
+  font-weight: 700;
+}
+.step-dot.active .step-num {
+  background: #c8965a;
+  color: #2a1c0e;
+}
+.step-dot.done .step-num {
+  background: #0a6d3a;
+}
+.step-label {
+  font-size: 11px;
+  color: #cdbda0;
+}
+
+.setup-card {
+  background: var(--panel);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.setup-card h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #f0d9a8;
+}
+.setup-card .hint {
+  margin: 0;
+  font-size: 13px;
+  color: #b6a488;
+  line-height: 1.5;
+}
+
+.choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.choice-grid.three {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+.choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 8px;
+  border: 2px solid #5a4d43;
+  background: #4a413a;
+  color: #e6d9c2;
+  border-radius: 12px;
+  font-size: 14px;
+}
+.choice.active {
+  border-color: #c8965a;
+  background: #574433;
+}
+.choice-big {
+  font-size: 26px;
+  font-weight: 800;
+}
+.choice-big.cho-color {
+  color: #2ec77a;
+}
+.choice-big.han-color {
+  color: #ff6b6b;
+}
+.choice-desc {
+  font-size: 11px;
+  color: #b6a488;
+}
+
+.setup-nav {
+  display: flex;
+  margin-top: 4px;
+}
+.setup-nav.two {
+  gap: 10px;
+}
+.setup-nav .btn {
+  flex: 1;
+}

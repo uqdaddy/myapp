@@ -35,6 +35,20 @@ export interface Move {
 export const ROWS = 10;
 export const COLS = 9;
 
+// Wing arrangement for the two horse/elephant squares on each flank.
+// 'MSSM' etc. describe, from the outer edge inward, whether the outer square
+// holds the Horse (마) or the Elephant (상).
+//   'horse-outer'    -> 마 on the edge-side square, 상 inner  (마상)
+//   'elephant-outer' -> 상 on the edge-side square, 마 inner  (상마)
+export type WingSetup = 'horse-outer' | 'elephant-outer';
+
+// A player's back-rank formation: independent choice for the left and right
+// wings. In Janggi both players may set these before the game starts.
+export interface SideSetup {
+  left: WingSetup; // player's left wing (cols 1,2 in board space)
+  right: WingSetup; // player's right wing (cols 6,7)
+}
+
 export function inBounds(r: number, c: number): boolean {
   return r >= 0 && r < ROWS && c >= 0 && c < COLS;
 }

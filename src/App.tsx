@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Board } from './Board';
-import { initialBoard } from './engine/board';
-import {
-  allLegalMoves,
-  applyMove,
-  legalMovesFor,
-} from './engine/moves';
+import { SetupScreen, StartConfig } from './SetupScreen';
+import { initialBoard, DEFAULT_SETUP } from './engine/board';
+import { applyMove, legalMovesFor } from './engine/moves';
 import { getStatus } from './engine/game';
 import { chooseMove, Difficulty } from './engine/ai';
-import { Board as BoardState, Move, Pos, Side, opponent } from './engine/types';
+import { Board as BoardState, Move, Pos, Side, SideSetup, opponent } from './engine/types';
 
 const SIDE_NAME: Record<Side, string> = { cho: '초 (楚)', han: '한 (漢)' };
 
+type Phase = 'setup' | 'playing';
+
 export default function App() {
+  const [phase, setPhase] = useState<Phase>('setup');
   const [humanSide, setHumanSide] = useState<Side>('cho');
   const [difficulty, setDifficulty] = useState<Difficulty>('normal');
   const [board, setBoard] = useState<BoardState>(() => initialBoard());
@@ -20,9 +20,6 @@ export default function App() {
   const [selected, setSelected] = useState<Pos | null>(null);
   const [lastMove, setLastMove] = useState<Move | null>(null);
   const [thinking, setThinking] = useState(false);
-  const [history, setHistory] = useState<
-    { board: BoardState; toMove: Side; lastMove: Move | null }[]
-  >([]);
 
   const status = useMemo(() => getStatus(board, toMove), [board, toMove]);
   const gameOver = status.kind !== 'playing';
@@ -33,18 +30,14 @@ export default function App() {
   }, [board, selected]);
 
   const aiSide = opponent(humanSide);
+  const aiTimer = useRef<number | null>(null);
 
-  const doMove = useCallback(
-    (move: Move) => {
-      setHistory((h) => [...h, { board, toMove, lastMove }]);
-      const next = applyMove(board, move);
-      setBoard(next);
-      setLastMove(move);
-      setSelected(null);
-      setToMove((s) => opponent(s));
-    },
-    [board, toMove, lastMove]
-  );
+  const doMove = useCallback((move: Move) => {
+    setBoard((b) => applyMove(b, move));
+    setLastMove(move);
+    setSelected(null);
+    setToMove((s) => opponent(s));
+  }, []);
 
   const onCellTap = useCallback(
     (r: number, c: number) => {
@@ -58,7 +51,6 @@ export default function App() {
           doMove(move);
           return;
         }
-        // tapping own another piece re-selects; otherwise deselect
         if (piece && piece.side === humanSide) {
           setSelected({ r, c });
         } else {
@@ -74,12 +66,11 @@ export default function App() {
   );
 
   // AI turn.
-  const aiTimer = useRef<number | null>(null);
   useEffect(() => {
+    if (phase !== 'playing') return;
     if (gameOver) return;
     if (toMove !== aiSide) return;
     setThinking(true);
-    // defer so the UI can paint the "thinking" state
     aiTimer.current = window.setTimeout(() => {
       const move = chooseMove(board, aiSide, difficulty);
       setThinking(false);
@@ -89,44 +80,32 @@ export default function App() {
       if (aiTimer.current) window.clearTimeout(aiTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toMove, aiSide, gameOver]);
+  }, [toMove, aiSide, gameOver, phase]);
 
-  const newGame = useCallback(
-    (side: Side, diff: Difficulty) => {
-      if (aiTimer.current) window.clearTimeout(aiTimer.current);
-      setHumanSide(side);
-      setDifficulty(diff);
-      setBoard(initialBoard());
-      setToMove('cho');
-      setSelected(null);
-      setLastMove(null);
-      setThinking(false);
-      setHistory([]);
-    },
-    []
-  );
+  const startGame = useCallback((cfg: StartConfig) => {
+    if (aiTimer.current) window.clearTimeout(aiTimer.current);
+    const human = cfg.humanSide;
+    const humanSetup: SideSetup = cfg.humanSetup;
+    // AI uses the default formation for its own side.
+    const choSetup = human === 'cho' ? humanSetup : DEFAULT_SETUP;
+    const hanSetup = human === 'han' ? humanSetup : DEFAULT_SETUP;
 
-  const undo = useCallback(() => {
-    // undo back to the human's previous turn (undo AI move + human move)
-    setHistory((h) => {
-      if (h.length === 0) return h;
-      let target = h.length - 1;
-      // step back until it's the human's turn again (or start)
-      const prevList = [...h];
-      let snap = prevList[target];
-      // if it's AI's move next after restore, go one more back
-      while (target > 0 && snap.toMove !== humanSide) {
-        target--;
-        snap = prevList[target];
-      }
-      setBoard(snap.board);
-      setToMove(snap.toMove);
-      setLastMove(snap.lastMove);
-      setSelected(null);
-      setThinking(false);
-      return prevList.slice(0, target);
-    });
-  }, [humanSide]);
+    setHumanSide(human);
+    setDifficulty(cfg.difficulty);
+    setBoard(initialBoard(choSetup, hanSetup));
+    setToMove('cho'); // Cho always moves first
+    setSelected(null);
+    setLastMove(null);
+    setThinking(false);
+    setPhase('playing');
+  }, []);
+
+  const backToSetup = useCallback(() => {
+    if (aiTimer.current) window.clearTimeout(aiTimer.current);
+    setThinking(false);
+    setSelected(null);
+    setPhase('setup');
+  }, []);
 
   const statusText = useMemo(() => {
     if (status.kind === 'checkmate') {
@@ -140,18 +119,17 @@ export default function App() {
     return `${turn} (${SIDE_NAME[toMove]})${check}`;
   }, [status, toMove, humanSide]);
 
-  const moveCount = allLegalMoves(board, toMove).length;
-
   const inCheck = status.kind === 'playing' && status.check;
+
+  if (phase === 'setup') {
+    return <SetupScreen onStart={startGame} />;
+  }
 
   return (
     <div className="app">
-      <header className="topbar">
-        <h1>장기 · Janggi</h1>
-        <div className={`status ${inCheck ? 'status-check' : ''}`}>
-          {thinking ? 'AI가 생각하는 중…' : statusText}
-        </div>
-      </header>
+      <div className={`status-bar ${inCheck ? 'status-check' : ''}`}>
+        {thinking ? 'AI가 생각하는 중…' : statusText}
+      </div>
 
       <div className="board-wrap">
         <Board
@@ -164,66 +142,11 @@ export default function App() {
         />
       </div>
 
-      <div className="controls">
-        <div className="control-row">
-          <label>내 진영</label>
-          <div className="segmented">
-            <button
-              className={humanSide === 'cho' ? 'active' : ''}
-              onClick={() => newGame('cho', difficulty)}
-            >
-              초 (선공)
-            </button>
-            <button
-              className={humanSide === 'han' ? 'active' : ''}
-              onClick={() => newGame('han', difficulty)}
-            >
-              한 (후공)
-            </button>
-          </div>
-        </div>
-
-        <div className="control-row">
-          <label>난이도</label>
-          <div className="segmented">
-            {(['easy', 'normal', 'hard'] as Difficulty[]).map((d) => (
-              <button
-                key={d}
-                className={difficulty === d ? 'active' : ''}
-                onClick={() => newGame(humanSide, d)}
-              >
-                {d === 'easy' ? '쉬움' : d === 'normal' ? '보통' : '어려움'}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="control-row buttons">
-          <button className="btn" onClick={() => newGame(humanSide, difficulty)}>
-            새 게임
-          </button>
-          <button
-            className="btn"
-            onClick={undo}
-            disabled={history.length === 0 || thinking}
-          >
-            무르기
-          </button>
-        </div>
-
-        {gameOver && (
-          <div className="control-row">
-            <button className="btn primary" onClick={() => newGame(humanSide, difficulty)}>
-              다시 시작
-            </button>
-          </div>
-        )}
-        {!gameOver && moveCount === 0 && null}
+      <div className="game-actions">
+        <button className="btn primary" onClick={backToSetup}>
+          새 게임
+        </button>
       </div>
-
-      <footer className="footer">
-        서버 없이 브라우저에서 실행 · 홈 화면에 추가하면 앱처럼 쓸 수 있어요
-      </footer>
     </div>
   );
 }
