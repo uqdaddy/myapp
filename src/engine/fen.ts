@@ -94,11 +94,20 @@ export function moveToUci(m: Move): string {
   return squareToUci(m.from.r, m.from.c) + squareToUci(m.to.r, m.to.c);
 }
 
-// UCI move string -> our from/to squares. A pass move in janggi is a null-ish
-// move; Fairy-Stockfish may emit special notation, handled by the caller.
-export function uciToMove(uci: string): { from: { r: number; c: number }; to: { r: number; c: number } } {
-  return {
-    from: uciToSquare(uci.slice(0, 2)),
-    to: uciToSquare(uci.slice(2, 4)),
-  };
+// UCI move string -> our from/to squares.
+// A janggi square is <file a-i><rank 1-10>, so ranks can be TWO digits
+// (rank 10). We must NOT slice at fixed offsets: e.g. "h10g8" splits into
+// "h10" + "g8", not "h1" + "0g". Parse with a regex that captures each square.
+const SQUARE_RE = /([a-i])(10|[1-9])/g;
+
+export function uciToMove(uci: string): {
+  from: { r: number; c: number };
+  to: { r: number; c: number };
+} {
+  const squares = uci.match(SQUARE_RE);
+  if (!squares || squares.length < 2) {
+    // Fallback (shouldn't happen for valid janggi moves): best-effort split.
+    return { from: uciToSquare(uci.slice(0, 2)), to: uciToSquare(uci.slice(2)) };
+  }
+  return { from: uciToSquare(squares[0]), to: uciToSquare(squares[1]) };
 }
