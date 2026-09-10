@@ -3,16 +3,20 @@ import { Board } from './Board';
 import { CapturedTray } from './CapturedTray';
 import { SetupScreen, StartConfig } from './SetupScreen';
 import { initialBoard } from './engine/board';
-import { applyMove, legalMovesFor } from './engine/moves';
+import { applyMove, legalMovesFor, allLegalMoves } from './engine/moves';
 import { getStatus } from './engine/game';
-import { chooseMove, chooseSetup, Difficulty } from './engine/ai';
-import { openingMove, OPENING_PLIES } from './engine/openings';
 import { initEngine, engineBestMove } from './engine/fairyEngine';
-import { allLegalMoves } from './engine/moves';
 import { playPlaceSound, unlockAudio } from './sound';
-import type { AiRequest, AiResponse } from './engine/aiWorker';
 import { materialScore, capturedByOpponentOf } from './engine/score';
-import { Board as BoardState, Move, Pos, Side, SideSetup, opponent } from './engine/types';
+import {
+  Board as BoardState,
+  Move,
+  Pos,
+  Side,
+  SideSetup,
+  WingSetup,
+  opponent,
+} from './engine/types';
 
 const SIDE_NAME: Record<Side, string> = { cho: '초', han: '한' };
 
@@ -21,8 +25,6 @@ type Phase = 'setup' | 'playing';
 export default function App() {
   const [phase, setPhase] = useState<Phase>('setup');
   const [humanSide, setHumanSide] = useState<Side>('cho');
-  // Difficulty is fixed to the strongest level.
-  const difficulty: Difficulty = 'hard';
   const [board, setBoard] = useState<BoardState>(() => initialBoard());
   const [toMove, setToMove] = useState<Side>('cho'); // Cho (bottom) moves first
   const [selected, setSelected] = useState<Pos | null>(null);
@@ -39,47 +41,29 @@ export default function App() {
 
   const aiSide = opponent(humanSide);
   const aiTimer = useRef<number | null>(null);
-  const workerRef = useRef<Worker | null>(null);
-  const aiMoveCount = useRef(0); // how many moves the AI has made this game
 
-  // Engine status is surfaced in the UI so it's clear whether the strong
-  // Fairy-Stockfish engine is active or we fell back to the built-in AI.
-  //  'loading' -> still initializing
-  //  'engine'  -> Fairy-Stockfish ready
-  //  'builtin' -> engine unavailable, using built-in AI
-  const [engineStatus, setEngineStatus] = useState<'loading' | 'engine' | 'builtin'>(
+  // This app plays exclusively on the Fairy-Stockfish engine — there is no
+  // built-in-AI fallback. If the engine can't load, we show an error rather
+  // than silently degrading to a weak AI.
+  //  'loading' -> initializing, 'ready' -> engine up, 'failed' -> can't load
+  const [engineState, setEngineState] = useState<'loading' | 'ready' | 'failed'>(
     'loading'
   );
-  const engineReady = useRef(false);
   const [engineError, setEngineError] = useState<string>('');
+  const engineReady = useRef(false);
 
-  // Create the fallback search worker once (our own AI, used if the strong
-  // WASM engine can't load).
-  useEffect(() => {
-    const worker = new Worker(new URL('./engine/aiWorker.ts', import.meta.url), {
-      type: 'module',
-    });
-    workerRef.current = worker;
-    return () => {
-      worker.terminate();
-      workerRef.current = null;
-    };
-  }, []);
-
-  // Try to initialize the strong Fairy-Stockfish engine. If it fails (e.g. no
-  // SharedArrayBuffer), fall back to the built-in AI and record why.
   useEffect(() => {
     let alive = true;
     initEngine()
       .then(() => {
         if (!alive) return;
         engineReady.current = true;
-        setEngineStatus('engine');
+        setEngineState('ready');
       })
       .catch((e) => {
         if (!alive) return;
         engineReady.current = false;
-        setEngineStatus('builtin');
+        setEngineState('failed');
         setEngineError(e instanceof Error ? e.message : String(e));
       });
     return () => {
@@ -135,43 +119,27 @@ export default function App() {
     [board, selected, legalTargets, doMove, gameOver, thinking, toMove, humanSide]
   );
 
-  // AI turn. Prefer the strong Fairy-Stockfish engine; fall back to the
-  // built-in AI worker if it isn't available. A minimum total delay keeps the
-  // opponent's move clearly noticeable.
+  // AI turn — Fairy-Stockfish only (no built-in fallback). A minimum total
+  // delay keeps the opponent's move clearly noticeable.
   const MIN_AI_DELAY = 600; // ms — small floor so a move is visible
-  const AI_TIME_BUDGET = 10000; // ms the AI may think
-  const AI_MAX_DEPTH = 30; // (built-in AI) let time, not depth, be the limiter
+  const AI_TIME_BUDGET = 10000; // ms the engine may think
   useEffect(() => {
     if (phase !== 'playing') return;
     if (gameOver) return;
     if (toMove !== aiSide) return;
+    if (engineState === 'failed') return; // no engine, no move (error shown)
     setThinking(true);
 
     const startedAt = Date.now();
     let cancelled = false;
-
-    const applyResult = (move: Move | null) => {
-      if (cancelled) return;
-      const elapsed = Date.now() - startedAt;
-      const wait = Math.max(0, MIN_AI_DELAY - elapsed);
-      aiTimer.current = window.setTimeout(() => {
-        if (cancelled) return;
-        setThinking(false);
-        if (move) {
-          aiMoveCount.current += 1;
-          doMove(move);
-        }
-      }, wait);
-    };
 
     // Convert an engine (from,to) result into our validated legal Move.
     const toLegalMove = (
       res: { from: { r: number; c: number }; to: { r: number; c: number } } | null
     ): Move | null => {
       if (!res) return null;
-      const legal = allLegalMoves(board, aiSide);
       return (
-        legal.find(
+        allLegalMoves(board, aiSide).find(
           (m) =>
             m.from.r === res.from.r &&
             m.from.c === res.from.c &&
@@ -181,73 +149,43 @@ export default function App() {
       );
     };
 
-    // Fall back to the built-in AI (worker if available, else main thread).
-    const runBuiltinAi = () => {
-      const worker = workerRef.current;
-      if (worker) {
-        const onMessage = (e: MessageEvent<AiResponse>) => {
-          worker.removeEventListener('message', onMessage);
-          applyResult(e.data.move);
-        };
-        worker.addEventListener('message', onMessage);
-        const req: AiRequest = {
-          board,
-          side: aiSide,
-          difficulty,
-          timeMs: AI_TIME_BUDGET,
-          maxDepth: AI_MAX_DEPTH,
-          aiMoveNumber: aiMoveCount.current,
-        };
-        worker.postMessage(req);
-        return () => worker.removeEventListener('message', onMessage);
-      }
-      let move: Move | null = null;
-      if (aiMoveCount.current < OPENING_PLIES) {
-        move = openingMove(board, aiSide, aiMoveCount.current);
-      }
-      if (!move) {
-        move = chooseMove(board, aiSide, difficulty, {
-          timeMs: AI_TIME_BUDGET,
-          maxDepth: AI_MAX_DEPTH,
-        });
-      }
-      applyResult(move);
-      return () => {};
-    };
-
-    let cleanupWorker: () => void = () => {};
-
-    if (engineReady.current) {
-      // Strong engine path.
-      engineBestMove(board, aiSide, AI_TIME_BUDGET)
-        .then((res) => {
+    // engineBestMove awaits initEngine() internally, so it handles the case
+    // where the engine is still loading when the AI's turn arrives.
+    engineBestMove(board, aiSide, AI_TIME_BUDGET)
+      .then((res) => {
+        if (cancelled) return;
+        const move = toLegalMove(res);
+        const elapsed = Date.now() - startedAt;
+        const wait = Math.max(0, MIN_AI_DELAY - elapsed);
+        aiTimer.current = window.setTimeout(() => {
           if (cancelled) return;
-          const move = toLegalMove(res);
-          if (move) applyResult(move);
-          else cleanupWorker = runBuiltinAi(); // engine gave nothing usable
-        })
-        .catch(() => {
-          if (!cancelled) cleanupWorker = runBuiltinAi();
-        });
-    } else {
-      cleanupWorker = runBuiltinAi();
-    }
+          setThinking(false);
+          if (move) doMove(move);
+        }, wait);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setThinking(false);
+        setEngineState('failed');
+        setEngineError(e instanceof Error ? e.message : String(e));
+      });
 
     return () => {
       cancelled = true;
-      cleanupWorker();
       if (aiTimer.current) window.clearTimeout(aiTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toMove, aiSide, gameOver, phase]);
+  }, [toMove, aiSide, gameOver, phase, engineState]);
 
   const startGame = useCallback((cfg: StartConfig) => {
     if (aiTimer.current) window.clearTimeout(aiTimer.current);
     const human = cfg.humanSide;
     const humanSetup: SideSetup = cfg.humanSetup;
-    // The AI picks its own wing formation based on the human's choice.
-    const aiSideLocal = opponent(human);
-    const aiSetup = chooseSetup(aiSideLocal, human, humanSetup);
+    // The AI picks one of the four valid wing formations at random (all are
+    // legal Janggi 차림). The engine then plays from that position.
+    const wings: WingSetup[] = ['horse-outer', 'elephant-outer'];
+    const pick = () => wings[Math.floor(Math.random() * wings.length)];
+    const aiSetup: SideSetup = { left: pick(), right: pick() };
     const choSetup = human === 'cho' ? humanSetup : aiSetup;
     const hanSetup = human === 'han' ? humanSetup : aiSetup;
 
@@ -257,7 +195,6 @@ export default function App() {
     setSelected(null);
     setLastMove(null);
     setThinking(false);
-    aiMoveCount.current = 0; // reset opening-book counter for the new game
     setPhase('playing');
   }, []);
 
@@ -310,14 +247,11 @@ export default function App() {
   return (
     <div className="app">
       <div className={`status-bar ${inCheck ? 'status-check' : ''}`}>
-        {thinking ? 'AI가 생각하는 중…' : statusText}
-      </div>
-      <div className="engine-badge">
-        {engineStatus === 'loading'
-          ? '엔진 로딩 중…'
-          : engineStatus === 'engine'
-            ? 'AI 엔진: Fairy-Stockfish'
-            : `AI 엔진: 내장(폴백)${engineError ? ` · ${engineError}` : ''}`}
+        {engineState === 'loading' && toMove === aiSide
+          ? '엔진 준비 중…'
+          : thinking
+            ? 'AI가 생각하는 중…'
+            : statusText}
       </div>
 
       {/* Opponent (AI) tray at the top: shows pieces the AI captured. */}
@@ -345,6 +279,24 @@ export default function App() {
               <div className="result-detail">{endResult.detail}</div>
               <button className="btn primary result-btn" onClick={backToSetup}>
                 새 게임
+              </button>
+            </div>
+          </div>
+        )}
+
+        {engineState === 'failed' && !endResult && (
+          <div className="result-overlay">
+            <div className="result-card lose">
+              <div className="result-title">엔진 오류</div>
+              <div className="result-detail">
+                AI 엔진을 불러오지 못했습니다. 페이지를 새로고침해 주세요.
+                {engineError ? ` (${engineError})` : ''}
+              </div>
+              <button
+                className="btn primary result-btn"
+                onClick={() => window.location.reload()}
+              >
+                새로고침
               </button>
             </div>
           </div>

@@ -540,12 +540,3 @@ body {
   background: #574433;
   color: #f0d9a8;
 }
-
-/* Small AI-engine status line under the status bar */
-.engine-badge {
-  text-align: center;
-  font-size: 11px;
-  color: #8a7a63;
-  padding: 0 12px 4px;
-  min-height: 14px;
-}
