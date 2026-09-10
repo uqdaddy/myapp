@@ -305,9 +305,14 @@ body {
 
 .game-actions {
   padding: 8px 12px calc(env(safe-area-inset-bottom) + 14px);
+  display: flex;
+  gap: 8px;
 }
 .game-actions .btn {
-  width: 100%;
+  flex: 1;
+}
+.game-actions .btn.primary {
+  flex: 2;
 }
 
 /* ---- Captured pieces + score trays ---- */
@@ -599,4 +604,108 @@ body {
   color: #8a7a63;
   word-break: break-all;
   user-select: all;
+}
+
+/* Second button in the result card */
+.result-card .result-btn + .result-btn {
+  margin-top: 8px;
+  background: #5a4d43;
+}
+
+/* Game record (기보) modal */
+.record-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(15, 11, 8, 0.72);
+  display: grid;
+  place-items: center;
+  padding: 12px;
+}
+.record-panel {
+  width: 100%;
+  max-width: 460px;
+  max-height: 92vh;
+  max-height: 92dvh;
+  overflow-y: auto;
+  background: #2a2320;
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.record-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.record-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #f0d9a8;
+}
+.record-close {
+  background: none;
+  border: none;
+  color: #cdbda0;
+  font-size: 20px;
+  padding: 4px 8px;
+}
+.record-board {
+  width: 100%;
+}
+.record-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.record-controls .btn {
+  flex: 1;
+  padding: 10px 4px;
+  font-size: 13px;
+}
+.record-count {
+  flex: 0 0 auto;
+  min-width: 54px;
+  text-align: center;
+  font-size: 13px;
+  color: #cdbda0;
+}
+.record-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 30vh;
+  overflow-y: auto;
+  border-top: 1px solid #453b33;
+}
+.record-move {
+  padding: 8px 10px;
+  font-size: 14px;
+  color: #e7d9bd;
+  border-bottom: 1px solid #3a322d;
+  cursor: pointer;
+}
+.record-move.current {
+  background: #574433;
+  color: #f0d9a8;
+  font-weight: 700;
+}
+.record-no {
+  color: #8a7a63;
+  margin-right: 4px;
+}
+.move-cho .record-no {
+  color: #2ec77a;
+}
+.move-han .record-no {
+  color: #ff6b6b;
+}
+.record-empty {
+  padding: 14px;
+  text-align: center;
+  color: #8a7a63;
+  font-size: 13px;
 }

@@ -8,6 +8,8 @@ import { getStatus } from './engine/game';
 import { initEngine, engineBestMove } from './engine/fairyEngine';
 import { playPlaceSound, unlockAudio } from './sound';
 import { materialScore, capturedByOpponentOf } from './engine/score';
+import { GameMove, toGameMove } from './engine/notation';
+import { GameRecord } from './GameRecord';
 import { isInAppBrowser } from './inapp';
 import { InAppNotice } from './InAppNotice';
 import {
@@ -32,6 +34,10 @@ export default function App() {
   const [selected, setSelected] = useState<Pos | null>(null);
   const [lastMove, setLastMove] = useState<Move | null>(null);
   const [thinking, setThinking] = useState(false);
+  // Game record (기보): the move list and the starting board to replay from.
+  const [history, setHistory] = useState<GameMove[]>([]);
+  const [startBoard, setStartBoard] = useState<BoardState>(() => initialBoard());
+  const [showRecord, setShowRecord] = useState(false);
 
   const status = useMemo(() => getStatus(board, toMove), [board, toMove]);
   const gameOver = status.kind !== 'playing';
@@ -86,8 +92,22 @@ export default function App() {
     [board, humanSide]
   );
 
+  // Refs mirror the latest board / side so doMove can record the game log
+  // without re-creating the callback (and without StrictMode double-updates).
+  const boardRef = useRef(board);
+  const toMoveRef = useRef(toMove);
+  useEffect(() => {
+    boardRef.current = board;
+  }, [board]);
+  useEffect(() => {
+    toMoveRef.current = toMove;
+  }, [toMove]);
+
   const doMove = useCallback((move: Move) => {
     playPlaceSound(!!move.captured); // wooden "clack" on every move
+    const mover = toMoveRef.current;
+    const before = boardRef.current;
+    setHistory((h) => [...h, toGameMove(before, move, mover)]);
     setBoard((b) => applyMove(b, move));
     setLastMove(move);
     setSelected(null);
@@ -192,12 +212,16 @@ export default function App() {
     const choSetup = human === 'cho' ? humanSetup : aiSetup;
     const hanSetup = human === 'han' ? humanSetup : aiSetup;
 
+    const initial = initialBoard(choSetup, hanSetup);
     setHumanSide(human);
-    setBoard(initialBoard(choSetup, hanSetup));
+    setBoard(initial);
+    setStartBoard(initial); // remember the starting position for replay
     setToMove('cho');
     setSelected(null);
     setLastMove(null);
     setThinking(false);
+    setHistory([]); // fresh game log
+    setShowRecord(false);
     setPhase('playing');
   }, []);
 
@@ -289,6 +313,13 @@ export default function App() {
               <button className="btn primary result-btn" onClick={backToSetup}>
                 새 게임
               </button>
+              <button
+                className="btn result-btn"
+                onClick={() => setShowRecord(true)}
+                disabled={history.length === 0}
+              >
+                기보 보기
+              </button>
             </div>
           </div>
         )}
@@ -329,10 +360,26 @@ export default function App() {
       />
 
       <div className="game-actions">
+        <button
+          className="btn"
+          onClick={() => setShowRecord(true)}
+          disabled={history.length === 0}
+        >
+          기보
+        </button>
         <button className="btn primary" onClick={backToSetup}>
           새 게임
         </button>
       </div>
+
+      {showRecord && (
+        <GameRecord
+          startBoard={startBoard}
+          history={history}
+          humanSide={humanSide}
+          onClose={() => setShowRecord(false)}
+        />
+      )}
     </div>
   );
 }
