@@ -7,6 +7,7 @@ import { applyMove, legalMovesFor } from './engine/moves';
 import { getStatus } from './engine/game';
 import { chooseMove, chooseSetup, Difficulty } from './engine/ai';
 import { openingMove, OPENING_PLIES } from './engine/openings';
+import { playPlaceSound, unlockAudio } from './sound';
 import type { AiRequest, AiResponse } from './engine/aiWorker';
 import { materialScore, capturedByOpponentOf } from './engine/score';
 import { Board as BoardState, Move, Pos, Side, SideSetup, opponent } from './engine/types';
@@ -66,6 +67,7 @@ export default function App() {
   );
 
   const doMove = useCallback((move: Move) => {
+    playPlaceSound(!!move.captured); // wooden "clack" on every move
     setBoard((b) => applyMove(b, move));
     setLastMove(move);
     setSelected(null);
@@ -74,6 +76,7 @@ export default function App() {
 
   const onCellTap = useCallback(
     (r: number, c: number) => {
+      unlockAudio(); // allow audio after the first user gesture (mobile)
       if (gameOver || thinking) return;
       if (toMove !== humanSide) return; // not your turn
 
