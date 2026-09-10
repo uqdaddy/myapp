@@ -540,3 +540,50 @@ body {
   background: #574433;
   color: #f0d9a8;
 }
+
+/* In-app browser notice (KakaoTalk etc.) */
+.inapp {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.inapp-card {
+  max-width: 380px;
+  width: 100%;
+  background: var(--panel);
+  border-radius: 16px;
+  padding: 24px 20px;
+  text-align: center;
+}
+.inapp-title {
+  margin: 0 0 12px;
+  font-size: 28px;
+  letter-spacing: 3px;
+  color: #f0d9a8;
+}
+.inapp-msg {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #e7d9bd;
+}
+.inapp-btn {
+  width: 100%;
+  margin-top: 14px;
+}
+.inapp-hint {
+  font-size: 13px;
+  color: #b6a488;
+  line-height: 1.5;
+  margin-top: 12px;
+}
+.inapp-url {
+  margin-top: 16px;
+  padding: 10px;
+  background: #2a2320;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #8a7a63;
+  word-break: break-all;
+}

@@ -8,6 +8,8 @@ import { getStatus } from './engine/game';
 import { initEngine, engineBestMove } from './engine/fairyEngine';
 import { playPlaceSound, unlockAudio } from './sound';
 import { materialScore, capturedByOpponentOf } from './engine/score';
+import { isInAppBrowser } from './inapp';
+import { InAppNotice } from './InAppNotice';
 import {
   Board as BoardState,
   Move,
@@ -19,14 +21,6 @@ import {
 } from './engine/types';
 
 const SIDE_NAME: Record<Side, string> = { cho: '초', han: '한' };
-
-// In-app browsers (KakaoTalk, Facebook, Instagram, Line, etc.) typically block
-// SharedArrayBuffer, so the engine can't run there regardless of host. Detect
-// them so we can advise opening in a real browser.
-function isInAppBrowser(): boolean {
-  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
-  return /KAKAOTALK|FBAN|FBAV|Instagram|Line\/|NAVER|DaumApps|; wv\)/i.test(ua);
-}
 
 type Phase = 'setup' | 'playing';
 
@@ -247,6 +241,12 @@ export default function App() {
     }
     return null;
   }, [status, humanSide]);
+
+  // In an in-app browser (KakaoTalk etc.) the engine can't run — show guidance
+  // / auto-escape to a real browser instead of the game.
+  if (isInAppBrowser()) {
+    return <InAppNotice />;
+  }
 
   if (phase === 'setup') {
     return <SetupScreen onStart={startGame} />;
