@@ -41,10 +41,10 @@ function svg(size) {
   <polygon points="${outer}" fill="#5c3a18"/>
   <polygon points="${rim}" fill="url(#rim)"/>
   <polygon points="${face}" fill="url(#face)" stroke="#6b4a22" stroke-width="${s * 0.006}"/>
-  <polygon points="${ring}" fill="none" stroke="#9e1515" stroke-width="${s * 0.02}"/>
+  <polygon points="${ring}" fill="none" stroke="#0a6d3a" stroke-width="${s * 0.02}"/>
   <text x="${cx}" y="${cy + fontSize * 0.03}" text-anchor="middle" dominant-baseline="central"
         font-family="'Nanum Myeongjo','Apple SD Gothic Neo',serif" font-weight="900"
-        font-size="${fontSize}" fill="#9e1515">楚</text>
+        font-size="${fontSize}" fill="#075a30">楚</text>
 </svg>`;
 }
 
