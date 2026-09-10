@@ -98,8 +98,9 @@ export default function App() {
 
   // AI turn. The worker searches with a time budget; we also enforce a minimum
   // total delay so the opponent's move is clearly noticeable after the player.
-  const MIN_AI_DELAY = 2000; // ms
-  const AI_TIME_BUDGET = 2500; // ms of search the worker is allowed
+  const MIN_AI_DELAY = 600; // ms — small floor so a move is visible
+  const AI_TIME_BUDGET = 6000; // ms of search the worker is allowed (higher = stronger)
+  const AI_MAX_DEPTH = 20; // let time, not depth, be the limiter
   useEffect(() => {
     if (phase !== 'playing') return;
     if (gameOver) return;
@@ -132,6 +133,7 @@ export default function App() {
         side: aiSide,
         difficulty,
         timeMs: AI_TIME_BUDGET,
+        maxDepth: AI_MAX_DEPTH,
       };
       worker.postMessage(req);
       return () => {
@@ -143,7 +145,10 @@ export default function App() {
 
     // Fallback: no worker available -> compute on the main thread.
     aiTimer.current = window.setTimeout(() => {
-      const move = chooseMove(board, aiSide, difficulty, { timeMs: AI_TIME_BUDGET });
+      const move = chooseMove(board, aiSide, difficulty, {
+        timeMs: AI_TIME_BUDGET,
+        maxDepth: AI_MAX_DEPTH,
+      });
       applyResult(move);
     }, 60);
     return () => {

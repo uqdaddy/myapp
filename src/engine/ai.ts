@@ -97,6 +97,60 @@ function pstValue(type: PieceType, side: Side, r: number, c: number): number {
 }
 
 // ---------------------------------------------------------------------------
+// Zobrist hashing: a fast, order-independent key for a board position so the
+// transposition table can recognise positions reached by different move
+// orders. Keys are 32-bit numbers XOR-ed together (good enough for a TT here).
+// ---------------------------------------------------------------------------
+const PIECE_INDEX: Record<PieceType, number> = {
+  general: 0,
+  guard: 1,
+  elephant: 2,
+  horse: 3,
+  chariot: 4,
+  cannon: 5,
+  soldier: 6,
+};
+
+function rng(seed: number): () => number {
+  let s = seed >>> 0;
+  return () => {
+    s ^= s << 13;
+    s ^= s >>> 17;
+    s ^= s << 5;
+    return s >>> 0;
+  };
+}
+
+// zobrist[side(0/1)][pieceType(0..6)][square(0..89)]
+const ZOBRIST: number[][][] = (() => {
+  const next = rng(0x9e3779b9);
+  const table: number[][][] = [];
+  for (let s = 0; s < 2; s++) {
+    table[s] = [];
+    for (let t = 0; t < 7; t++) {
+      table[s][t] = [];
+      for (let sq = 0; sq < 90; sq++) table[s][t][sq] = next();
+    }
+  }
+  return table;
+})();
+const ZOBRIST_SIDE = rng(0x1234abcd)();
+
+function hashBoard(board: Board, sideToMove: Side): number {
+  let h = 0;
+  for (let r = 0; r < board.length; r++) {
+    for (let c = 0; c < board[r].length; c++) {
+      const p = board[r][c];
+      if (!p) continue;
+      const s = p.side === 'cho' ? 0 : 1;
+      h ^= ZOBRIST[s][PIECE_INDEX[p.type]][r * 9 + c];
+    }
+  }
+  if (sideToMove === 'han') h ^= ZOBRIST_SIDE;
+  return h >>> 0;
+}
+
+// ---------------------------------------------------------------------------
 // Static evaluation from the perspective of `side` (positive = good for side).
 // ---------------------------------------------------------------------------
 function evaluate(board: Board, side: Side): number {
@@ -128,52 +182,163 @@ function depthFor(difficulty: Difficulty): number {
   }
 }
 
-// Order moves: winning captures first (MVV-LVA style), then the rest.
-// Better ordering => more alpha-beta cutoffs => deeper effective search.
-function orderMoves(board: Board, moves: Move[]): Move[] {
-  return [...moves].sort((a, b) => scoreMove(board, b) - scoreMove(board, a));
-}
-
-function scoreMove(board: Board, m: Move): number {
-  if (!m.captured) return 0;
-  const victim = VALUES[m.captured.type];
-  const attacker = board[m.from.r][m.from.c];
-  const attackerVal = attacker ? VALUES[attacker.type] : 0;
-  // Most Valuable Victim - Least Valuable Attacker.
-  return victim * 10 - attackerVal;
+function moveKey(m: Move): string {
+  return `${m.from.r}${m.from.c}${m.to.r}${m.to.c}`;
 }
 
 // ---------------------------------------------------------------------------
-// Quiescence search: at the leaves, keep resolving captures so the engine
-// doesn't stop mid-exchange and think it just won material for free. This is
-// the single biggest fix for "AI gives pieces away" behaviour.
+// Search state carried through one chooseMove call: transposition table,
+// killer moves (per ply), and a history heuristic table for quiet moves.
 // ---------------------------------------------------------------------------
+type TTFlag = 'exact' | 'lower' | 'upper';
+interface TTEntry {
+  depth: number;
+  score: number;
+  flag: TTFlag;
+  bestKey?: string;
+}
+
+class SearchState {
+  tt = new Map<number, TTEntry>();
+  killers: [string?, string?][] = [];
+  history = new Map<string, number>();
+  deadline = Infinity;
+
+  killer(ply: number): [string?, string?] {
+    return (this.killers[ply] ||= [undefined, undefined]);
+  }
+  addKiller(ply: number, key: string) {
+    const k = this.killer(ply);
+    if (k[0] !== key) {
+      k[1] = k[0];
+      k[0] = key;
+    }
+  }
+  addHistory(key: string, depth: number) {
+    this.history.set(key, (this.history.get(key) ?? 0) + depth * depth);
+  }
+}
+
+// Move ordering: TT best move, then winning captures (MVV-LVA), then killers,
+// then quiet moves ranked by the history heuristic.
+function orderMoves(
+  board: Board,
+  moves: Move[],
+  st: SearchState,
+  ply: number,
+  ttBestKey?: string
+): Move[] {
+  const killers = st.killer(ply);
+  const scored = moves.map((m) => {
+    const key = moveKey(m);
+    let s = 0;
+    if (ttBestKey && key === ttBestKey) s += 1_000_000;
+    if (m.captured) {
+      const attacker = board[m.from.r][m.from.c];
+      s += 100_000 + VALUES[m.captured.type] * 10 - (attacker ? VALUES[attacker.type] : 0);
+    } else {
+      if (key === killers[0]) s += 9_000;
+      else if (key === killers[1]) s += 8_000;
+      s += st.history.get(key) ?? 0;
+    }
+    return { m, s, key };
+  });
+  scored.sort((a, b) => b.s - a.s);
+  return scored.map((x) => x.m);
+}
+
+// Quiescence search: resolve captures at the leaves so the engine never stops
+// mid-exchange and mispaints a position.
 function quiescence(
   board: Board,
   side: Side,
   alpha: number,
   beta: number,
-  qdepth: number
+  qdepth: number,
+  st: SearchState
 ): number {
+  if (Date.now() >= st.deadline) throw new TimeUp();
   const standPat = evaluate(board, side);
   if (qdepth === 0) return standPat;
   if (standPat >= beta) return beta;
   if (standPat > alpha) alpha = standPat;
 
   const captures = allLegalMoves(board, side).filter((m) => m.captured);
-  for (const move of orderMoves(board, captures)) {
+  for (const move of orderMoves(board, captures, st, 0)) {
     const next = applyMove(board, move);
-    const score = -quiescence(next, opponent(side), -beta, -alpha, qdepth - 1);
+    const score = -quiescence(next, opponent(side), -beta, -alpha, qdepth - 1, st);
     if (score >= beta) return beta;
     if (score > alpha) alpha = score;
   }
   return alpha;
 }
 
-// ---------------------------------------------------------------------------
-// Root move selection with time-limited iterative deepening. Searches as deep
-// as the time budget allows, so play is strong but never freezes for long.
-// ---------------------------------------------------------------------------
+// Alpha-beta negamax with transposition table, check extension, killer moves
+// and history heuristic.
+function negamax(
+  board: Board,
+  side: Side,
+  depth: number,
+  alpha: number,
+  beta: number,
+  ply: number,
+  st: SearchState
+): number {
+  if (Date.now() >= st.deadline) throw new TimeUp();
+
+  const alphaOrig = alpha;
+  const hash = hashBoard(board, side);
+  const tt = st.tt.get(hash);
+  if (tt && tt.depth >= depth) {
+    if (tt.flag === 'exact') return tt.score;
+    if (tt.flag === 'lower' && tt.score > alpha) alpha = tt.score;
+    else if (tt.flag === 'upper' && tt.score < beta) beta = tt.score;
+    if (alpha >= beta) return tt.score;
+  }
+
+  // Check extension: search one deeper when in check so tactics aren't missed.
+  const inCheck = isInCheck(board, side);
+  const d = inCheck ? depth + 1 : depth;
+
+  if (d <= 0) {
+    return quiescence(board, side, alpha, beta, 6, st);
+  }
+
+  const moves = allLegalMoves(board, side);
+  if (moves.length === 0) {
+    return -VALUES.general - depth; // checkmate/stalemate: this side loses
+  }
+
+  let best = -Infinity;
+  let bestKey: string | undefined;
+  const ordered = orderMoves(board, moves, st, ply, tt?.bestKey);
+  for (const move of ordered) {
+    const next = applyMove(board, move);
+    const score = -negamax(next, opponent(side), d - 1, -beta, -alpha, ply + 1, st);
+    if (score > best) {
+      best = score;
+      bestKey = moveKey(move);
+    }
+    if (best > alpha) alpha = best;
+    if (alpha >= beta) {
+      // beta cutoff: remember this quiet move as a killer / history move.
+      if (!move.captured) {
+        st.addKiller(ply, moveKey(move));
+        st.addHistory(moveKey(move), depth);
+      }
+      break;
+    }
+  }
+
+  // Store in the transposition table.
+  let flag: TTFlag = 'exact';
+  if (best <= alphaOrig) flag = 'upper';
+  else if (best >= beta) flag = 'lower';
+  st.tt.set(hash, { depth, score: best, flag, bestKey });
+
+  return best;
+}
+
 // Thrown to abort a search that has exceeded its time budget.
 class TimeUp extends Error {}
 
@@ -182,6 +347,11 @@ export interface SearchOptions {
   timeMs?: number; // soft time budget; stop deepening once exceeded
 }
 
+// ---------------------------------------------------------------------------
+// Root: time-limited iterative deepening. Searches depth 1, 2, 3, ... reusing
+// results via the transposition table, and returns the best move from the
+// deepest COMPLETED iteration within the time budget.
+// ---------------------------------------------------------------------------
 export function chooseMove(
   board: Board,
   side: Side,
@@ -190,42 +360,30 @@ export function chooseMove(
 ): Move | null {
   const capDepth = opts.maxDepth ?? depthFor(difficulty);
   const timeMs = opts.timeMs ?? Infinity;
-  const deadline = Date.now() + timeMs;
 
   const rootMoves = allLegalMoves(board, side);
   if (rootMoves.length === 0) return null;
 
+  const st = new SearchState();
+  st.deadline = Date.now() + timeMs;
+
   let bestMove: Move = rootMoves[0];
   let bestNearTop: Move[] = [bestMove];
 
-  // Iterative deepening: search depth 1, 2, ... using the previous depth's
-  // best move to order the root, and stop when the time budget is spent. The
-  // deepest COMPLETED iteration provides the move we actually play.
   for (let depth = 1; depth <= capDepth; depth++) {
     let bestScore = -Infinity;
     let alpha = -Infinity;
     const beta = Infinity;
 
-    const ordered = orderMoves(board, rootMoves);
-    const idx = ordered.indexOf(bestMove);
-    if (idx > 0) {
-      ordered.splice(idx, 1);
-      ordered.unshift(bestMove);
-    }
+    // Order root moves; search the running best move first.
+    const ordered = orderMoves(board, rootMoves, st, 0, moveKey(bestMove));
 
     const candidates: { move: Move; score: number }[] = [];
     let aborted = false;
     try {
       for (const move of ordered) {
         const next = applyMove(board, move);
-        const score = -negamaxTimed(
-          next,
-          opponent(side),
-          depth - 1,
-          -beta,
-          -alpha,
-          deadline
-        );
+        const score = -negamax(next, opponent(side), depth - 1, -beta, -alpha, 1, st);
         candidates.push({ move, score });
         if (score > bestScore) {
           bestScore = score;
@@ -234,50 +392,18 @@ export function chooseMove(
         if (score > alpha) alpha = score;
       }
     } catch (e) {
-      if (e instanceof TimeUp) {
-        aborted = true;
-      } else {
-        throw e;
-      }
+      if (e instanceof TimeUp) aborted = true;
+      else throw e;
     }
 
-    if (aborted) break; // keep the best move from the last completed depth
+    if (aborted) break; // keep best move from the last fully completed depth
 
-    bestNearTop = candidates
-      .filter((c) => c.score >= bestScore - 1)
-      .map((c) => c.move);
+    bestNearTop = candidates.filter((c) => c.score >= bestScore - 1).map((c) => c.move);
 
-    if (Date.now() >= deadline) break;
+    // If we found a forced win, no need to search deeper.
+    if (bestScore >= VALUES.general) break;
+    if (Date.now() >= st.deadline) break;
   }
 
-  // Small random tie-break among near-best moves for natural variety.
   return bestNearTop[Math.floor(Math.random() * bestNearTop.length)];
-}
-
-// Time-aware negamax used at the root's iterative deepening.
-function negamaxTimed(
-  board: Board,
-  side: Side,
-  depth: number,
-  alpha: number,
-  beta: number,
-  deadline: number
-): number {
-  if (Date.now() >= deadline) throw new TimeUp();
-  if (depth === 0) {
-    return quiescence(board, side, alpha, beta, 4);
-  }
-  const moves = allLegalMoves(board, side);
-  if (moves.length === 0) {
-    return -VALUES.general - depth;
-  }
-  let best = -Infinity;
-  for (const move of orderMoves(board, moves)) {
-    const next = applyMove(board, move);
-    const score = -negamaxTimed(next, opponent(side), depth - 1, -beta, -alpha, deadline);
-    if (score > best) best = score;
-    if (best > alpha) alpha = best;
-    if (alpha >= beta) break;
-  }
-  return best;
 }
