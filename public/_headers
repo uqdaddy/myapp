@@ -1,0 +1,7 @@
+# Cloudflare Pages headers. Enables SharedArrayBuffer / cross-origin isolation
+# for the multithreaded Fairy-Stockfish WASM engine — no service-worker
+# workaround needed on this host. (GitHub Pages ignores this file.)
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Resource-Policy: cross-origin

@@ -23,9 +23,14 @@ const crossOriginIsolation = {
   },
 };
 
-// GitHub Pages: served from https://uqdaddy.github.io/myapp/
-// so the base path must match the repo name.
+// Base path differs by host:
+//  - GitHub Pages: served from https://uqdaddy.github.io/myapp/ -> base "/myapp/"
+//  - Cloudflare Pages: served from the site root -> base "/"
+// Controlled by APP_BASE (defaults to the GitHub Pages path).
+declare const process: { env: Record<string, string | undefined> };
+const base = process.env.APP_BASE ?? '/myapp/';
+
 export default defineConfig({
-  base: '/myapp/',
+  base,
   plugins: [react(), crossOriginIsolation],
 });

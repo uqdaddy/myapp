@@ -20,6 +20,14 @@ import {
 
 const SIDE_NAME: Record<Side, string> = { cho: '초', han: '한' };
 
+// In-app browsers (KakaoTalk, Facebook, Instagram, Line, etc.) typically block
+// SharedArrayBuffer, so the engine can't run there regardless of host. Detect
+// them so we can advise opening in a real browser.
+function isInAppBrowser(): boolean {
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+  return /KAKAOTALK|FBAN|FBAV|Instagram|Line\/|NAVER|DaumApps|; wv\)/i.test(ua);
+}
+
 type Phase = 'setup' | 'playing';
 
 export default function App() {
@@ -287,11 +295,19 @@ export default function App() {
         {engineState === 'failed' && !endResult && (
           <div className="result-overlay">
             <div className="result-card lose">
-              <div className="result-title">엔진 오류</div>
-              <div className="result-detail">
-                AI 엔진을 불러오지 못했습니다. 페이지를 새로고침해 주세요.
-                {engineError ? ` (${engineError})` : ''}
-              </div>
+              <div className="result-title">엔진을 열 수 없어요</div>
+              {isInAppBrowser() ? (
+                <div className="result-detail">
+                  카카오톡·페이스북 같은 앱 안의 브라우저에서는 AI 엔진이 동작하지
+                  않습니다. 오른쪽 위 메뉴에서 <b>“다른 브라우저로 열기”</b>(사파리 또는
+                  크롬)를 선택해 주세요.
+                </div>
+              ) : (
+                <div className="result-detail">
+                  AI 엔진을 불러오지 못했습니다. 페이지를 새로고침해 주세요.
+                  {engineError ? ` (${engineError})` : ''}
+                </div>
+              )}
               <button
                 className="btn primary result-btn"
                 onClick={() => window.location.reload()}

@@ -10,32 +10,26 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <script>
-      // Register the service worker early. It injects COOP/COEP headers so the
-      // multithreaded Fairy-Stockfish WASM engine (SharedArrayBuffer) works on
-      // GitHub Pages, and also provides offline caching. If the page is not yet
-      // cross-origin isolated once the SW controls it, reload once to apply.
+      // Register the service worker (offline caching + COOP/COEP header
+      // injection). On hosts that already send real COOP/COEP headers
+      // (e.g. Cloudflare Pages), the page is cross-origin isolated from the
+      // first response and no reload is needed. On GitHub Pages the SW must
+      // inject the headers, which only takes effect once it controls the page —
+      // so we reload once when the page is not yet isolated.
       (function () {
         if (!('serviceWorker' in navigator)) return;
+        var alreadyIsolated = self.crossOriginIsolated === true;
         var reloaded = sessionStorage.getItem('coiReloaded');
         navigator.serviceWorker
           .register('sw.js')
           .then(function (reg) {
+            // If real headers already isolate us, just keep the SW for caching.
+            if (alreadyIsolated) return;
+            if (reloaded) return;
             if (
-              navigator.serviceWorker.controller &&
-              !self.crossOriginIsolated &&
-              !reloaded
+              (navigator.serviceWorker.controller || reg.active) &&
+              !self.crossOriginIsolated
             ) {
-              sessionStorage.setItem('coiReloaded', '1');
-              location.reload();
-            }
-            reg.addEventListener('updatefound', function () {
-              if (!reloaded) {
-                sessionStorage.setItem('coiReloaded', '1');
-                location.reload();
-              }
-            });
-            // If SW is active but not yet controlling this page, reload once.
-            if (reg.active && !navigator.serviceWorker.controller && !reloaded) {
               sessionStorage.setItem('coiReloaded', '1');
               location.reload();
             }
