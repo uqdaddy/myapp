@@ -99,8 +99,8 @@ export default function App() {
   // AI turn. The worker searches with a time budget; we also enforce a minimum
   // total delay so the opponent's move is clearly noticeable after the player.
   const MIN_AI_DELAY = 600; // ms — small floor so a move is visible
-  const AI_TIME_BUDGET = 6000; // ms of search the worker is allowed (higher = stronger)
-  const AI_MAX_DEPTH = 20; // let time, not depth, be the limiter
+  const AI_TIME_BUDGET = 10000; // ms of search the worker is allowed (higher = stronger)
+  const AI_MAX_DEPTH = 30; // let time, not depth, be the limiter
   useEffect(() => {
     if (phase !== 'playing') return;
     if (gameOver) return;

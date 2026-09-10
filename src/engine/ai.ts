@@ -304,6 +304,15 @@ function negamax(
     return quiescence(board, side, alpha, beta, 6, st);
   }
 
+  // Null-move pruning: if giving the opponent a free move still leaves us at
+  // or above beta, this line is so good we can prune it. Skip when in check or
+  // at shallow depth (and only with a finite beta window).
+  if (!inCheck && d >= 3 && beta < VALUES.general / 2) {
+    const R = 2; // reduction
+    const nullScore = -negamax(board, opponent(side), d - 1 - R, -beta, -beta + 1, ply + 1, st);
+    if (nullScore >= beta) return beta;
+  }
+
   const moves = allLegalMoves(board, side);
   if (moves.length === 0) {
     return -VALUES.general - depth; // checkmate/stalemate: this side loses
@@ -312,16 +321,27 @@ function negamax(
   let best = -Infinity;
   let bestKey: string | undefined;
   const ordered = orderMoves(board, moves, st, ply, tt?.bestKey);
+  let first = true;
   for (const move of ordered) {
     const next = applyMove(board, move);
-    const score = -negamax(next, opponent(side), d - 1, -beta, -alpha, ply + 1, st);
+    let score: number;
+    if (first) {
+      // Principal variation: full-window search for the first (best-ordered) move.
+      score = -negamax(next, opponent(side), d - 1, -beta, -alpha, ply + 1, st);
+    } else {
+      // Others: quick null-window scout; re-search fully only if it looks better.
+      score = -negamax(next, opponent(side), d - 1, -alpha - 1, -alpha, ply + 1, st);
+      if (score > alpha && score < beta) {
+        score = -negamax(next, opponent(side), d - 1, -beta, -alpha, ply + 1, st);
+      }
+    }
+    first = false;
     if (score > best) {
       best = score;
       bestKey = moveKey(move);
     }
     if (best > alpha) alpha = best;
     if (alpha >= beta) {
-      // beta cutoff: remember this quiet move as a killer / history move.
       if (!move.captured) {
         st.addKiller(ply, moveKey(move));
         st.addHistory(moveKey(move), depth);
