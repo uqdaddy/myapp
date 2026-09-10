@@ -401,6 +401,18 @@ body {
   font-size: 14px;
 }
 
+.setup-footer {
+  margin-top: auto;
+  padding-top: 16px;
+  text-align: center;
+  font-size: 11px;
+  color: #7a6b55;
+  line-height: 1.6;
+}
+.setup-footer a {
+  color: #b6a488;
+}
+
 .stepper {
   display: flex;
   justify-content: space-between;

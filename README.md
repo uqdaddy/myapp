@@ -49,15 +49,23 @@ npm run preview  # 빌드 결과 미리보기 (COOP/COEP 헤더 포함)
 엔진 WASM 아티팩트(`public/engine/`)는 `scripts/copy-wasm.mjs`가
 `node_modules`에서 복사하며 커밋되지 않습니다.
 
-## GitHub Pages 배포
+## 배포 (Cloudflare Pages)
 
-`main`에 push하면 GitHub Actions가 자동으로 빌드 + 배포합니다.
+배포는 **Cloudflare Pages**를 사용합니다. `_headers`로 진짜 COOP/COEP
+헤더를 보낼 수 있어 사파리 등에서 엔진(SharedArrayBuffer)이 안정적으로 동작합니다.
+(GitHub Pages는 헤더를 못 넣어 사용하지 않습니다.)
 
-1. 저장소 → **Settings → Pages → Source** 를 **"GitHub Actions"** 로 설정(최초 1회)
-2. `main`에 push → `.github/workflows/deploy.yml` 실행 → 배포
-3. `https://uqdaddy.github.io/myapp/` 접속
+**Cloudflare Pages 설정**
+1. Cloudflare Pages에서 이 GitHub 저장소를 연결 (퍼블릭·프라이빗 모두 가능)
+2. **Build command**: `npm run build:cf`
+3. **Build output directory**: `dist`
+4. `main`에 push → 자동 빌드·배포 → `https://<프로젝트>.pages.dev` 접속
 
-> 다른 저장소 이름으로 배포하려면 `vite.config.ts`의 `base`를 `/저장소이름/`로 변경.
+> `npm run build:cf`는 base를 `/`(루트)로 빌드합니다. GitHub Pages처럼 하위
+> 경로에 올릴 때만 `APP_BASE=/저장소이름/`로 빌드하세요.
+
+`public/_headers`가 COOP/COEP 헤더를 지정하므로, Cloudflare에서는 서비스
+워커의 헤더 삽입 없이도 cross-origin isolation이 적용됩니다.
 
 ## 모바일에서 앱처럼 쓰기
 - **아이폰(사파리)**: 공유 → "홈 화면에 추가"
@@ -70,14 +78,16 @@ src/
     types.ts, board.ts, moves.ts, game.ts   # 장기 규칙 검증 (자체)
     fen.ts          # 보드 <-> Janggi FEN / UCI 변환
     fairyEngine.ts  # Fairy-Stockfish WASM UCI 어댑터
-    ai.ts, aiWorker.ts, openings.ts, score.ts  # 자체 AI (폴백)
-  Board.tsx, SetupScreen.tsx, CapturedTray.tsx # UI
+    notation.ts, score.ts   # 기보 표기 / 점수 계산
+  Board.tsx, SetupScreen.tsx, CapturedTray.tsx, GameRecord.tsx  # UI
+  InAppNotice.tsx, inapp.ts # 인앱 브라우저 감지/안내
   App.tsx           # 게임 상태/흐름
 public/
-  sw.js             # COOP/COEP 헤더 삽입 + 오프라인 캐시
+  _headers          # Cloudflare COOP/COEP 헤더
+  sw.js             # COOP/COEP 헤더 삽입(폴백) + 오프라인 캐시
   engine/           # (생성물) Fairy-Stockfish WASM
 scripts/copy-wasm.mjs             # WASM 아티팩트 복사
-.github/workflows/deploy.yml      # GitHub Pages 자동 배포
+scripts/gen-icons.mjs             # 앱 아이콘 생성
 ```
 
 ## 라이선스

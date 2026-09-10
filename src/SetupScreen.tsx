@@ -125,6 +125,18 @@ export function SetupScreen({ onStart }: Props) {
           </div>
         </div>
       )}
+
+      <footer className="setup-footer">
+        AI 엔진{' '}
+        <a
+          href="https://github.com/fairy-stockfish/Fairy-Stockfish"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Fairy-Stockfish
+        </a>{' '}
+        기반 · GPL-3.0. 소스 코드는 요청 시 제공합니다.
+      </footer>
     </div>
   );
 }
