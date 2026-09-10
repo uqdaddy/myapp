@@ -211,6 +211,15 @@ function positionalTerms(board: Board, side: Side): number {
   return s;
 }
 
+// Cheap "boxed in" proxy: a piece with very few move squares is hard to save
+// when threatened, so a threat against it counts extra. This is an O(moves)
+// approximation of being trapped (no expensive attack-map recomputation), so
+// it doesn't slow the search meaningfully. A piece with <= 1 escape square is
+// treated as trapped.
+function isBoxedIn(board: Board, r: number, c: number): boolean {
+  return pseudoMovesFor(board, { r, c }).length <= 1;
+}
+
 // Mobility + tactical threats in a SINGLE move-generation pass (one
 // pseudoMovesFor call per piece) to keep evaluation cheap:
 //   - mobility: weighted count of moves (chariots/cannons value open lines)
@@ -236,13 +245,25 @@ function activityTerms(board: Board, side: Side): { mobility: number; threats: n
       let significant = 0;
       for (const m of moves) {
         if (!m.captured || m.captured.side !== foe) continue;
-        // Attacking the enemy general is "check", handled separately by the
-        // check bonus — do not treat it as a huge material threat here.
+        // Attacking the enemy general is "check", handled separately.
         if (m.captured.type === 'general') continue;
         const victimVal = VALUES[m.captured.type];
         if (victimVal >= attackerVal) {
           hereworth += victimVal * 0.12;
           significant++;
+
+          // TRAPPED-PIECE bonus: if the threatened enemy piece has no safe
+          // escape (it can't move away without still being lost), the threat
+          // is almost as good as a capture. This lets the engine set up and
+          // exploit traps — e.g. threatening a chariot boxed in by its own
+          // pieces. Only checked for the valuable pieces (chariot/cannon) to
+          // keep evaluation fast.
+          if (
+            (m.captured.type === 'chariot' || m.captured.type === 'cannon') &&
+            isBoxedIn(board, m.to.r, m.to.c)
+          ) {
+            hereworth += victimVal * 0.35;
+          }
         } else {
           hereworth += victimVal * 0.04;
         }
