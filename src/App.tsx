@@ -163,13 +163,20 @@ export default function App() {
     const startedAt = Date.now();
     let cancelled = false;
 
-    // Convert an engine (from,to) result into our validated legal Move.
+    const legal = allLegalMoves(board, aiSide);
+    // Safety: if there are no legal moves the game is already over; bail.
+    if (legal.length === 0) {
+      setThinking(false);
+      return;
+    }
+
+    // Match the engine's (from,to) to one of our validated legal moves.
     const toLegalMove = (
       res: { from: { r: number; c: number }; to: { r: number; c: number } } | null
     ): Move | null => {
       if (!res) return null;
       return (
-        allLegalMoves(board, aiSide).find(
+        legal.find(
           (m) =>
             m.from.r === res.from.r &&
             m.from.c === res.from.c &&
@@ -179,29 +186,43 @@ export default function App() {
       );
     };
 
-    // engineBestMove awaits initEngine() internally, so it handles the case
-    // where the engine is still loading when the AI's turn arrives.
+    // Apply a chosen move (or, as a last resort, a random legal one) so the
+    // game NEVER stalls on the AI's turn.
+    const finish = (move: Move | null) => {
+      if (cancelled) return;
+      const chosen = move ?? legal[Math.floor(Math.random() * legal.length)];
+      const elapsed = Date.now() - startedAt;
+      const wait = Math.max(0, MIN_AI_DELAY - elapsed);
+      aiTimer.current = window.setTimeout(() => {
+        if (cancelled) return;
+        setThinking(false);
+        doMove(chosen);
+      }, wait);
+    };
+
+    // Watchdog: if the engine doesn't answer in time, play a legal move anyway
+    // instead of hanging on "AI가 생각하는 중…".
+    const watchdog = window.setTimeout(
+      () => finish(null),
+      AI_TIME_BUDGET + 8000
+    );
+
     engineBestMove(board, aiSide, AI_TIME_BUDGET)
       .then((res) => {
         if (cancelled) return;
-        const move = toLegalMove(res);
-        const elapsed = Date.now() - startedAt;
-        const wait = Math.max(0, MIN_AI_DELAY - elapsed);
-        aiTimer.current = window.setTimeout(() => {
-          if (cancelled) return;
-          setThinking(false);
-          if (move) doMove(move);
-        }, wait);
+        window.clearTimeout(watchdog);
+        finish(toLegalMove(res)); // null -> random legal fallback
       })
-      .catch((e) => {
+      .catch(() => {
         if (cancelled) return;
-        setThinking(false);
-        setEngineState('failed');
-        setEngineError(e instanceof Error ? e.message : String(e));
+        window.clearTimeout(watchdog);
+        // Engine errored on this move — don't kill the game; play a legal move.
+        finish(null);
       });
 
     return () => {
       cancelled = true;
+      window.clearTimeout(watchdog);
       if (aiTimer.current) window.clearTimeout(aiTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

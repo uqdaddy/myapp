@@ -186,30 +186,39 @@ export async function setSkillLevel(level: number): Promise<void> {
   mod.postMessage(`setoption name Skill Level value ${clamped}`);
 }
 
+// Serialize engine queries: only one position/go/bestmove cycle runs at a
+// time. Overlapping cycles (e.g. rapid turn changes or StrictMode double
+// effects) would otherwise cross their UCI responses and hang. New requests
+// wait for the previous one to finish.
+let engineChain: Promise<unknown> = Promise.resolve();
+
 // Ask the engine for the best move in the given position.
-// Returns from/to squares (our coordinates), or null if the engine passes or
-// has no move.
+// Returns from/to squares (our coordinates), or null if none.
 export async function engineBestMove(
   board: Board,
   toMove: Side,
   movetimeMs: number
 ): Promise<{ from: { r: number; c: number }; to: { r: number; c: number } } | null> {
-  const mod = await loadModule();
-  if (!ready) await initEngine();
+  const run = engineChain.then(async () => {
+    const mod = await loadModule();
+    if (!ready) await initEngine();
 
-  const fen = toJanggiFen(board, toMove);
-  mod.postMessage(`position fen ${fen}`);
-  const line = await sendAndWait(
-    mod,
-    `go movetime ${movetimeMs}`,
-    (l) => l.startsWith('bestmove'),
-    movetimeMs + 20000
-  );
-  // "bestmove e2e3 ponder ..." or "bestmove (none)"
-  const parts = line.split(/\s+/);
-  const best = parts[1];
-  if (!best || best === '(none)' || best === '0000') return null;
-  return uciToMove(best);
+    const fen = toJanggiFen(board, toMove);
+    mod.postMessage(`position fen ${fen}`);
+    const line = await sendAndWait(
+      mod,
+      `go movetime ${movetimeMs}`,
+      (l) => l.startsWith('bestmove'),
+      movetimeMs + 10000
+    );
+    const best = line.split(/\s+/)[1];
+    if (!best || best === '(none)' || best === '0000') return null;
+    return uciToMove(best);
+  });
+
+  // Keep the chain alive even if this request fails, so the next one still runs.
+  engineChain = run.catch(() => undefined);
+  return run;
 }
 
 // Optional: feed a specific starting FEN + move history if we later want the
