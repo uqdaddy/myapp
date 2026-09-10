@@ -7,14 +7,16 @@ import type { SideSetup, WingSetup } from './types';
 // Material values, tuned to reflect real Janggi piece strength.
 // (Chariot strongest, then Cannon, Horse, Elephant/Guard, Soldier.)
 // ---------------------------------------------------------------------------
+// Values in "centipoint" scale so that material dominates every positional
+// term — the engine must never trade a piece for a nicer square.
 const VALUES: Record<PieceType, number> = {
   general: 1_000_000,
-  chariot: 130,
-  cannon: 80,
-  horse: 52,
-  elephant: 34,
-  guard: 32,
-  soldier: 18,
+  chariot: 1300,
+  cannon: 800,
+  horse: 520,
+  elephant: 340,
+  guard: 320,
+  soldier: 180,
 };
 
 // ---------------------------------------------------------------------------
@@ -252,18 +254,24 @@ function kingSafety(board: Board, side: Side): number {
 // ---------------------------------------------------------------------------
 function sideScore(board: Board, side: Side): number {
   let material = 0;
+  let pst = 0;
   for (let r = 0; r < board.length; r++) {
     for (let c = 0; c < board[r].length; c++) {
       const p = board[r][c];
       if (!p || p.side !== side) continue;
-      material += VALUES[p.type] + pstValue(p.type, p.side, r, c);
+      material += VALUES[p.type];
+      pst += pstValue(p.type, p.side, r, c);
     }
   }
   const positional = positionalTerms(board, side);
   const mobility = mobilityTerm(board, side);
   const safety = kingSafety(board, side);
-  // Mobility is scaled down so it nudges, not dominates.
-  return material + positional + mobility * 0.35 + safety;
+  // Positional terms (PST + development + mobility + king safety) must only
+  // ever be a tie-breaker. Material dominates so the engine never prefers a
+  // nicer square over winning or keeping a piece. The whole positional bundle
+  // is scaled well below the value of a single soldier (18).
+  const positionalBundle = pst + positional + mobility * 0.35 + safety;
+  return material + positionalBundle * 0.12;
 }
 
 function evaluate(board: Board, side: Side): number {
@@ -391,19 +399,20 @@ function negamax(
 ): number {
   if (Date.now() >= st.deadline) throw new TimeUp();
 
+  // Check extension: search one deeper when in check so tactics aren't missed.
+  // Compute the effective depth BEFORE probing so the TT depth is consistent.
+  const inCheck = isInCheck(board, side);
+  const d = inCheck ? depth + 1 : depth;
+
   const alphaOrig = alpha;
   const hash = hashBoard(board, side);
   const tt = st.tt.get(hash);
-  if (tt && tt.depth >= depth) {
+  if (tt && tt.depth >= d) {
     if (tt.flag === 'exact') return tt.score;
     if (tt.flag === 'lower' && tt.score > alpha) alpha = tt.score;
     else if (tt.flag === 'upper' && tt.score < beta) beta = tt.score;
     if (alpha >= beta) return tt.score;
   }
-
-  // Check extension: search one deeper when in check so tactics aren't missed.
-  const inCheck = isInCheck(board, side);
-  const d = inCheck ? depth + 1 : depth;
 
   if (d <= 0) {
     return quiescence(board, side, alpha, beta, 6, st);
@@ -455,11 +464,11 @@ function negamax(
     }
   }
 
-  // Store in the transposition table.
+  // Store in the transposition table keyed by the effective (extended) depth.
   let flag: TTFlag = 'exact';
   if (best <= alphaOrig) flag = 'upper';
   else if (best >= beta) flag = 'lower';
-  st.tt.set(hash, { depth, score: best, flag, bestKey });
+  st.tt.set(hash, { depth: d, score: best, flag, bestKey });
 
   return best;
 }
