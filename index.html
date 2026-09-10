@@ -9,6 +9,40 @@
     <meta name="theme-color" content="#8a5a2b" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <script>
+      // Register the service worker early. It injects COOP/COEP headers so the
+      // multithreaded Fairy-Stockfish WASM engine (SharedArrayBuffer) works on
+      // GitHub Pages, and also provides offline caching. If the page is not yet
+      // cross-origin isolated once the SW controls it, reload once to apply.
+      (function () {
+        if (!('serviceWorker' in navigator)) return;
+        var reloaded = sessionStorage.getItem('coiReloaded');
+        navigator.serviceWorker
+          .register('sw.js')
+          .then(function (reg) {
+            if (
+              navigator.serviceWorker.controller &&
+              !self.crossOriginIsolated &&
+              !reloaded
+            ) {
+              sessionStorage.setItem('coiReloaded', '1');
+              location.reload();
+            }
+            reg.addEventListener('updatefound', function () {
+              if (!reloaded) {
+                sessionStorage.setItem('coiReloaded', '1');
+                location.reload();
+              }
+            });
+            // If SW is active but not yet controlling this page, reload once.
+            if (reg.active && !navigator.serviceWorker.controller && !reloaded) {
+              sessionStorage.setItem('coiReloaded', '1');
+              location.reload();
+            }
+          })
+          .catch(function () {});
+      })();
+    </script>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icon-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />

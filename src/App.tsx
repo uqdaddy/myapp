@@ -7,6 +7,8 @@ import { applyMove, legalMovesFor } from './engine/moves';
 import { getStatus } from './engine/game';
 import { chooseMove, chooseSetup, Difficulty } from './engine/ai';
 import { openingMove, OPENING_PLIES } from './engine/openings';
+import { initEngine, engineBestMove } from './engine/fairyEngine';
+import { allLegalMoves } from './engine/moves';
 import { playPlaceSound, unlockAudio } from './sound';
 import type { AiRequest, AiResponse } from './engine/aiWorker';
 import { materialScore, capturedByOpponentOf } from './engine/score';
@@ -39,9 +41,10 @@ export default function App() {
   const aiTimer = useRef<number | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const aiMoveCount = useRef(0); // how many moves the AI has made this game
+  const engineReady = useRef(false); // Fairy-Stockfish available?
 
-  // Create the search worker once (runs the heavy AI off the main thread so
-  // the UI never freezes while the AI thinks).
+  // Create the fallback search worker once (our own AI, used if the strong
+  // WASM engine can't load).
   useEffect(() => {
     const worker = new Worker(new URL('./engine/aiWorker.ts', import.meta.url), {
       type: 'module',
@@ -50,6 +53,22 @@ export default function App() {
     return () => {
       worker.terminate();
       workerRef.current = null;
+    };
+  }, []);
+
+  // Try to initialize the strong Fairy-Stockfish engine. If it fails (e.g. no
+  // SharedArrayBuffer), we silently fall back to the built-in AI.
+  useEffect(() => {
+    let alive = true;
+    initEngine()
+      .then(() => {
+        if (alive) engineReady.current = true;
+      })
+      .catch(() => {
+        if (alive) engineReady.current = false;
+      });
+    return () => {
+      alive = false;
     };
   }, []);
 
@@ -101,11 +120,12 @@ export default function App() {
     [board, selected, legalTargets, doMove, gameOver, thinking, toMove, humanSide]
   );
 
-  // AI turn. The worker searches with a time budget; we also enforce a minimum
-  // total delay so the opponent's move is clearly noticeable after the player.
+  // AI turn. Prefer the strong Fairy-Stockfish engine; fall back to the
+  // built-in AI worker if it isn't available. A minimum total delay keeps the
+  // opponent's move clearly noticeable.
   const MIN_AI_DELAY = 600; // ms — small floor so a move is visible
-  const AI_TIME_BUDGET = 10000; // ms of search the worker is allowed (higher = stronger)
-  const AI_MAX_DEPTH = 30; // let time, not depth, be the limiter
+  const AI_TIME_BUDGET = 10000; // ms the AI may think
+  const AI_MAX_DEPTH = 30; // (built-in AI) let time, not depth, be the limiter
   useEffect(() => {
     if (phase !== 'playing') return;
     if (gameOver) return;
@@ -129,31 +149,43 @@ export default function App() {
       }, wait);
     };
 
-    const worker = workerRef.current;
-    if (worker) {
-      const onMessage = (e: MessageEvent<AiResponse>) => {
-        worker.removeEventListener('message', onMessage);
-        applyResult(e.data.move);
-      };
-      worker.addEventListener('message', onMessage);
-      const req: AiRequest = {
-        board,
-        side: aiSide,
-        difficulty,
-        timeMs: AI_TIME_BUDGET,
-        maxDepth: AI_MAX_DEPTH,
-        aiMoveNumber: aiMoveCount.current,
-      };
-      worker.postMessage(req);
-      return () => {
-        cancelled = true;
-        worker.removeEventListener('message', onMessage);
-        if (aiTimer.current) window.clearTimeout(aiTimer.current);
-      };
-    }
+    // Convert an engine (from,to) result into our validated legal Move.
+    const toLegalMove = (
+      res: { from: { r: number; c: number }; to: { r: number; c: number } } | null
+    ): Move | null => {
+      if (!res) return null;
+      const legal = allLegalMoves(board, aiSide);
+      return (
+        legal.find(
+          (m) =>
+            m.from.r === res.from.r &&
+            m.from.c === res.from.c &&
+            m.to.r === res.to.r &&
+            m.to.c === res.to.c
+        ) ?? null
+      );
+    };
 
-    // Fallback: no worker available -> compute on the main thread.
-    aiTimer.current = window.setTimeout(() => {
+    // Fall back to the built-in AI (worker if available, else main thread).
+    const runBuiltinAi = () => {
+      const worker = workerRef.current;
+      if (worker) {
+        const onMessage = (e: MessageEvent<AiResponse>) => {
+          worker.removeEventListener('message', onMessage);
+          applyResult(e.data.move);
+        };
+        worker.addEventListener('message', onMessage);
+        const req: AiRequest = {
+          board,
+          side: aiSide,
+          difficulty,
+          timeMs: AI_TIME_BUDGET,
+          maxDepth: AI_MAX_DEPTH,
+          aiMoveNumber: aiMoveCount.current,
+        };
+        worker.postMessage(req);
+        return () => worker.removeEventListener('message', onMessage);
+      }
       let move: Move | null = null;
       if (aiMoveCount.current < OPENING_PLIES) {
         move = openingMove(board, aiSide, aiMoveCount.current);
@@ -165,9 +197,30 @@ export default function App() {
         });
       }
       applyResult(move);
-    }, 60);
+      return () => {};
+    };
+
+    let cleanupWorker: () => void = () => {};
+
+    if (engineReady.current) {
+      // Strong engine path.
+      engineBestMove(board, aiSide, AI_TIME_BUDGET)
+        .then((res) => {
+          if (cancelled) return;
+          const move = toLegalMove(res);
+          if (move) applyResult(move);
+          else cleanupWorker = runBuiltinAi(); // engine gave nothing usable
+        })
+        .catch(() => {
+          if (!cancelled) cleanupWorker = runBuiltinAi();
+        });
+    } else {
+      cleanupWorker = runBuiltinAi();
+    }
+
     return () => {
       cancelled = true;
+      cleanupWorker();
       if (aiTimer.current) window.clearTimeout(aiTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

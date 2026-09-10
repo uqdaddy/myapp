@@ -3,15 +3,9 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import './styles.css';
 
-// Register the service worker for PWA / offline support.
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    const base = import.meta.env.BASE_URL || '/';
-    navigator.serviceWorker.register(`${base}sw.js`).catch(() => {
-      /* ignore registration errors (e.g. dev mode) */
-    });
-  });
-}
+// The service worker is registered early in index.html (it injects COOP/COEP
+// headers for the WASM engine and provides offline caching), so we don't
+// register it again here.
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
