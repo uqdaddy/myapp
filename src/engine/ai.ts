@@ -1,5 +1,5 @@
-import { Board, Move, PieceType, Side, opponent } from './types';
-import { allLegalMoves, applyMove, isInCheck } from './moves';
+import { Board, Move, PieceType, Side, inPalace, opponent } from './types';
+import { allLegalMoves, applyMove, isInCheck, pseudoMovesFor, findGeneral } from './moves';
 
 // ---------------------------------------------------------------------------
 // Material values, tuned to reflect real Janggi piece strength.
@@ -150,19 +150,122 @@ function hashBoard(board: Board, sideToMove: Side): number {
   return h >>> 0;
 }
 
-// ---------------------------------------------------------------------------
-// Static evaluation from the perspective of `side` (positive = good for side).
-// ---------------------------------------------------------------------------
-function evaluate(board: Board, side: Side): number {
-  let score = 0;
+// Starting squares of each side's back-rank pieces, used to reward development
+// (moving major pieces off their home squares in the opening).
+// row for Han = 0, for Cho = 9.
+function homeRow(side: Side): number {
+  return side === 'cho' ? 9 : 0;
+}
+function cannonHomeRow(side: Side): number {
+  return side === 'cho' ? 7 : 2;
+}
+
+// Per-side positional evaluation (all positive). Combines development,
+// mobility, king safety, and defensive shape into a Janggi "sense".
+function positionalTerms(board: Board, side: Side): number {
+  let s = 0;
+  const hr = homeRow(side);
+  const chr = cannonHomeRow(side);
+
   for (let r = 0; r < board.length; r++) {
     for (let c = 0; c < board[r].length; c++) {
       const p = board[r][c];
-      if (!p) continue;
-      const val = VALUES[p.type] + pstValue(p.type, p.side, r, c);
-      score += p.side === side ? val : -val;
+      if (!p || p.side !== side) continue;
+
+      switch (p.type) {
+        case 'horse':
+        case 'elephant':
+          // Strongly reward developing horses/elephants off the back rank so
+          // the engine prefers useful development over aimless shuffles.
+          if (r !== hr) s += 18;
+          break;
+        case 'chariot':
+          // Reward chariots that have become active (left the corner).
+          if (r !== hr || (c !== 0 && c !== 8)) s += 10;
+          break;
+        case 'cannon':
+          // Reward cannons that have moved off their home row into play.
+          if (r !== chr) s += 14;
+          break;
+        case 'guard':
+          // Guards belong in the palace. Penalize leaving it, and keep them on
+          // their home squares in the opening (discourage pointless shuffles).
+          if (!inPalace(side, r, c)) s -= 20;
+          else if (c !== 3 && c !== 5) s -= 6; // moved off a home guard square
+          break;
+        case 'general':
+          // The general is safest on its palace center/back rank; penalize
+          // stepping off the central file or forward without reason.
+          if (c !== 4) s -= 14;
+          if (r !== hr) s -= 12;
+          break;
+        default:
+          break;
+      }
     }
   }
+  return s;
+}
+
+// Lightweight mobility: count pseudo-legal moves for the side's mobile pieces.
+// Chariots and cannons benefit most from open lines, so weight them.
+function mobilityTerm(board: Board, side: Side): number {
+  let m = 0;
+  for (let r = 0; r < board.length; r++) {
+    for (let c = 0; c < board[r].length; c++) {
+      const p = board[r][c];
+      if (!p || p.side !== side) continue;
+      if (p.type === 'guard' || p.type === 'general') continue;
+      const count = pseudoMovesFor(board, { r, c }).length;
+      const w = p.type === 'chariot' ? 1.2 : p.type === 'cannon' ? 1.0 : 0.5;
+      m += count * w;
+    }
+  }
+  return m;
+}
+
+// King safety: reward guards/general clustered in the palace, penalize an
+// exposed general (empty squares directly in front of it).
+function kingSafety(board: Board, side: Side): number {
+  const gen = findGeneral(board, side);
+  if (!gen) return -500;
+  let s = 0;
+  // Count friendly defenders (guards/elephants) inside the palace.
+  for (let r = 0; r < board.length; r++) {
+    for (let c = 0; c < board[r].length; c++) {
+      const p = board[r][c];
+      if (!p || p.side !== side) continue;
+      if ((p.type === 'guard' || p.type === 'elephant') && inPalace(side, r, c)) s += 6;
+    }
+  }
+  // Penalize the general sitting on an open file (no friendly screen ahead).
+  const forward = side === 'cho' ? -1 : 1;
+  const fr = gen.r + forward;
+  if (fr >= 0 && fr < board.length && !board[fr][gen.c]) s -= 8;
+  return s;
+}
+
+// ---------------------------------------------------------------------------
+// Static evaluation from the perspective of `side` (positive = good for side).
+// ---------------------------------------------------------------------------
+function sideScore(board: Board, side: Side): number {
+  let material = 0;
+  for (let r = 0; r < board.length; r++) {
+    for (let c = 0; c < board[r].length; c++) {
+      const p = board[r][c];
+      if (!p || p.side !== side) continue;
+      material += VALUES[p.type] + pstValue(p.type, p.side, r, c);
+    }
+  }
+  const positional = positionalTerms(board, side);
+  const mobility = mobilityTerm(board, side);
+  const safety = kingSafety(board, side);
+  // Mobility is scaled down so it nudges, not dominates.
+  return material + positional + mobility * 0.35 + safety;
+}
+
+function evaluate(board: Board, side: Side): number {
+  let score = sideScore(board, side) - sideScore(board, opponent(side));
   // Being in check is bad; giving check is mildly good.
   if (isInCheck(board, side)) score -= 30;
   if (isInCheck(board, opponent(side))) score += 20;
