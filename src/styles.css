@@ -730,15 +730,22 @@ body {
   }
 }
 
+/* Always reserves the same height so toggling "장군!" never moves the board. */
 .check-banner {
   margin: 0 12px 6px;
-  padding: 8px 12px;
-  text-align: center;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
   font-size: 16px;
   font-weight: 800;
+  color: transparent;
+  background: transparent;
+}
+.check-banner.active {
   color: #fff;
   background: #c62828;
-  border-radius: 8px;
   animation: bannerFlash 0.8s ease-in-out infinite alternate;
 }
 @keyframes bannerFlash {

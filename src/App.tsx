@@ -290,11 +290,13 @@ export default function App() {
             ? 'AI가 생각하는 중…'
             : statusText}
       </div>
-      {inCheck && !gameOver && (
-        <div className="check-banner">
-          장군! {toMove === humanSide ? '내 궁이 위험합니다' : ''}
-        </div>
-      )}
+      {/* Always present (reserves height) so showing "장군!" never shifts the
+          board down. Only the visible styling changes. */}
+      <div className={`check-banner ${inCheck && !gameOver ? 'active' : ''}`}>
+        {inCheck && !gameOver
+          ? `장군! ${toMove === humanSide ? '내 궁이 위험합니다' : ''}`
+          : ''}
+      </div>
 
       {/* Opponent (AI) tray at the top: shows pieces the AI captured. */}
       <CapturedTray
