@@ -87,27 +87,47 @@ body {
   stroke-width: 1.4;
 }
 
-.piece {
-  stroke-width: 2;
+/* Octagonal wooden stones. Outer polygon is the bevel/edge, inner polygon is
+   the engraved face where the character sits. */
+.piece-group {
+  pointer-events: none;
+}
+
+.piece-oct {
+  stroke-width: 1.6;
+  filter: drop-shadow(0 1.5px 1.5px rgba(0, 0, 0, 0.45));
 }
 .piece-cho {
-  fill: #f7edd6;
-  stroke: var(--cho);
+  fill: #f2e2c0; /* warm ivory wood */
+  stroke: #7a5a2e;
 }
 .piece-han {
-  fill: #f7edd6;
-  stroke: var(--han);
+  fill: #f2e2c0;
+  stroke: #7a5a2e;
 }
+
+.piece-inner {
+  fill: none;
+  stroke-width: 1.1;
+}
+.inner-cho {
+  stroke: rgba(10, 109, 58, 0.55);
+}
+.inner-han {
+  stroke: rgba(176, 32, 32, 0.55);
+}
+
 .piece-selected {
-  stroke-width: 3.5;
-  filter: drop-shadow(0 0 4px rgba(255, 210, 120, 0.9));
+  stroke-width: 3;
+  filter: drop-shadow(0 0 5px rgba(255, 210, 120, 0.95));
 }
 
 .piece-label {
-  font-size: 20px;
-  font-weight: 800;
+  font-weight: 900;
   pointer-events: none;
   user-select: none;
+  font-family: 'Nanum Myeongjo', 'Apple SD Gothic Neo', 'Malgun Gothic',
+    serif; /* calligraphic feel like real Janggi engraving */
 }
 .label-cho {
   fill: var(--cho);

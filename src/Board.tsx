@@ -1,4 +1,4 @@
-import { Board as BoardState, Move, Pos, Side } from './engine/types';
+import { Board as BoardState, Move, PieceType, Pos, Side } from './engine/types';
 import { PIECE_LABEL } from './pieces';
 
 interface Props {
@@ -19,6 +19,33 @@ const GAP = 40; // px between grid lines
 
 const W = MARGIN * 2 + GAP * (COLS - 1);
 const H = MARGIN * 2 + GAP * (ROWS - 1);
+
+// Real Janggi pieces are octagonal wooden discs whose size reflects rank:
+// the General is largest, then Chariot/Cannon, then Horse/Elephant, then
+// Guard, and the Soldiers are smallest.
+const PIECE_RADIUS: Record<PieceType, number> = {
+  general: 20,
+  chariot: 18,
+  cannon: 18,
+  horse: 16.5,
+  elephant: 16.5,
+  guard: 15,
+  soldier: 14,
+};
+
+// Build the point list for a regular octagon of the given radius, rotated so
+// a flat edge sits at the top (like a real Janggi stone).
+function octagonPoints(cx: number, cy: number, radius: number): string {
+  const pts: string[] = [];
+  for (let i = 0; i < 8; i++) {
+    // start at -67.5° so top and bottom are flat edges
+    const angle = (Math.PI / 4) * i - Math.PI / 8 - Math.PI / 2;
+    const x = cx + radius * Math.cos(angle);
+    const y = cy + radius * Math.sin(angle);
+    pts.push(`${x.toFixed(2)},${y.toFixed(2)}`);
+  }
+  return pts.join(' ');
+}
 
 export function Board({
   board,
@@ -131,25 +158,36 @@ export function Board({
                 height={GAP}
                 fill="transparent"
               />
-              {piece && (
-                <g>
-                  <circle
-                    cx={px}
-                    cy={py}
-                    r={17}
-                    className={`piece piece-${piece.side} ${isSel ? 'piece-selected' : ''}`}
-                  />
-                  <text
-                    x={px}
-                    y={py}
-                    className={`piece-label label-${piece.side}`}
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                  >
-                    {PIECE_LABEL[piece.side][piece.type]}
-                  </text>
-                </g>
-              )}
+              {piece && (() => {
+                const rad = PIECE_RADIUS[piece.type];
+                const fontSize = rad * 1.15;
+                return (
+                  <g className={isSel ? 'piece-group selected' : 'piece-group'}>
+                    {/* outer bevel ring */}
+                    <polygon
+                      points={octagonPoints(px, py, rad)}
+                      className={`piece-oct piece-${piece.side} ${
+                        isSel ? 'piece-selected' : ''
+                      }`}
+                    />
+                    {/* inner engraved ring */}
+                    <polygon
+                      points={octagonPoints(px, py, rad - 3)}
+                      className={`piece-inner inner-${piece.side}`}
+                    />
+                    <text
+                      x={px}
+                      y={py}
+                      style={{ fontSize }}
+                      className={`piece-label label-${piece.side}`}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                    >
+                      {PIECE_LABEL[piece.side][piece.type]}
+                    </text>
+                  </g>
+                );
+              })()}
               {isTarget && !piece && null}
             </g>
           );
