@@ -41,7 +41,17 @@ export default function App() {
   const aiTimer = useRef<number | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const aiMoveCount = useRef(0); // how many moves the AI has made this game
-  const engineReady = useRef(false); // Fairy-Stockfish available?
+
+  // Engine status is surfaced in the UI so it's clear whether the strong
+  // Fairy-Stockfish engine is active or we fell back to the built-in AI.
+  //  'loading' -> still initializing
+  //  'engine'  -> Fairy-Stockfish ready
+  //  'builtin' -> engine unavailable, using built-in AI
+  const [engineStatus, setEngineStatus] = useState<'loading' | 'engine' | 'builtin'>(
+    'loading'
+  );
+  const engineReady = useRef(false);
+  const [engineError, setEngineError] = useState<string>('');
 
   // Create the fallback search worker once (our own AI, used if the strong
   // WASM engine can't load).
@@ -57,15 +67,20 @@ export default function App() {
   }, []);
 
   // Try to initialize the strong Fairy-Stockfish engine. If it fails (e.g. no
-  // SharedArrayBuffer), we silently fall back to the built-in AI.
+  // SharedArrayBuffer), fall back to the built-in AI and record why.
   useEffect(() => {
     let alive = true;
     initEngine()
       .then(() => {
-        if (alive) engineReady.current = true;
+        if (!alive) return;
+        engineReady.current = true;
+        setEngineStatus('engine');
       })
-      .catch(() => {
-        if (alive) engineReady.current = false;
+      .catch((e) => {
+        if (!alive) return;
+        engineReady.current = false;
+        setEngineStatus('builtin');
+        setEngineError(e instanceof Error ? e.message : String(e));
       });
     return () => {
       alive = false;
@@ -296,6 +311,13 @@ export default function App() {
     <div className="app">
       <div className={`status-bar ${inCheck ? 'status-check' : ''}`}>
         {thinking ? 'AI가 생각하는 중…' : statusText}
+      </div>
+      <div className="engine-badge">
+        {engineStatus === 'loading'
+          ? '엔진 로딩 중…'
+          : engineStatus === 'engine'
+            ? 'AI 엔진: Fairy-Stockfish'
+            : `AI 엔진: 내장(폴백)${engineError ? ` · ${engineError}` : ''}`}
       </div>
 
       {/* Opponent (AI) tray at the top: shows pieces the AI captured. */}

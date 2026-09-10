@@ -32,25 +32,49 @@ function base(): string {
   return (import.meta as unknown as { env: { BASE_URL: string } }).env.BASE_URL || '/';
 }
 
-// Dynamically load the UMD stockfish.js and instantiate the WASM module.
+// Load stockfish.js via a <script> tag so that `document.currentScript.src`
+// resolves and the Emscripten module can auto-locate stockfish.wasm and
+// stockfish.worker.js relative to itself. The script defines a global
+// `Stockfish` factory. (Evaluating it via new Function/import breaks the
+// module's self-location and pthread worker spawning.)
+function injectScript(src: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[data-sf="1"]`);
+    if (existing) {
+      resolve();
+      return;
+    }
+    const el = document.createElement('script');
+    el.src = src;
+    el.async = true;
+    el.dataset.sf = '1';
+    el.onload = () => resolve();
+    el.onerror = () => reject(new Error(`failed to load engine script: ${src}`));
+    document.head.appendChild(el);
+  });
+}
+
 async function loadModule(): Promise<StockfishModule> {
   if (modulePromise) return modulePromise;
 
   modulePromise = (async () => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      throw new Error('engine requires a browser environment');
+    }
+    // SharedArrayBuffer is required by this multithreaded WASM build. If the
+    // page is not cross-origin isolated, bail out early so the app can fall
+    // back to the built-in AI (and we get a clear reason).
+    if (typeof SharedArrayBuffer === 'undefined' || self.crossOriginIsolated === false) {
+      throw new Error('SharedArrayBuffer unavailable (not cross-origin isolated)');
+    }
+
     const b = base();
-    // Fetch the loader script text and evaluate it to obtain the factory.
-    const loaderUrl = `${b}engine/stockfish.js`;
-    const resp = await fetch(loaderUrl);
-    if (!resp.ok) throw new Error(`failed to fetch engine loader: ${resp.status}`);
-    const code = await resp.text();
-    // The script assigns `var Stockfish = (function(){...})()` and does
-    // `module.exports = Stockfish`. Evaluate it in a function scope providing a
-    // fake module/exports so we can capture the factory.
-    const factory = new Function(
-      'module',
-      'exports',
-      `${code}; return (typeof Stockfish!=='undefined') ? Stockfish : module.exports;`
-    )({ exports: {} }, {}) as (opts: Record<string, unknown>) => Promise<StockfishModule>;
+    await injectScript(`${b}engine/stockfish.js`);
+
+    const factory = (window as unknown as {
+      Stockfish?: (opts: Record<string, unknown>) => Promise<StockfishModule>;
+    }).Stockfish;
+    if (!factory) throw new Error('Stockfish factory not found after script load');
 
     const instance = await factory({
       locateFile: (path: string) => `${b}engine/${path}`,
