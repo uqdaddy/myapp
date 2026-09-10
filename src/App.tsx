@@ -5,7 +5,13 @@ import { SetupScreen, StartConfig } from './SetupScreen';
 import { initialBoard } from './engine/board';
 import { applyMove, legalMovesFor, allLegalMoves, findGeneral } from './engine/moves';
 import { getStatus } from './engine/game';
-import { initEngine, engineBestMove } from './engine/fairyEngine';
+import {
+  initEngine,
+  engineBestMove,
+  setSkillLevel,
+  DIFFICULTY_SETTINGS,
+  Difficulty,
+} from './engine/fairyEngine';
 import { playPlaceSound, unlockAudio } from './sound';
 import { materialScore, capturedByOpponentOf } from './engine/score';
 import { GameMove, toGameMove } from './engine/notation';
@@ -34,6 +40,7 @@ export default function App() {
   const [selected, setSelected] = useState<Pos | null>(null);
   const [lastMove, setLastMove] = useState<Move | null>(null);
   const [thinking, setThinking] = useState(false);
+  const [difficulty, setDifficulty] = useState<Difficulty>('normal');
   // Game record (기보): the move list and the starting board to replay from.
   const [history, setHistory] = useState<GameMove[]>([]);
   const [startBoard, setStartBoard] = useState<BoardState>(() => initialBoard());
@@ -144,8 +151,8 @@ export default function App() {
   // AI turn — Fairy-Stockfish only (no built-in fallback). A minimum total
   // delay keeps the opponent's move clearly noticeable.
   const MIN_AI_DELAY = 400; // ms — small floor so a move is visible
-  const AI_TIME_BUDGET = 2000; // ms the engine may think (Fairy-Stockfish is
-  // strong enough that 2s already plays very well; higher just adds waiting)
+  // Think time comes from the chosen difficulty (harder = longer + higher skill).
+  const AI_TIME_BUDGET = DIFFICULTY_SETTINGS[difficulty].timeMs;
   useEffect(() => {
     if (phase !== 'playing') return;
     if (gameOver) return;
@@ -214,6 +221,9 @@ export default function App() {
 
     const initial = initialBoard(choSetup, hanSetup);
     setHumanSide(human);
+    setDifficulty(cfg.difficulty);
+    // Apply the chosen strength to the engine (best-effort; ignore if not ready).
+    setSkillLevel(DIFFICULTY_SETTINGS[cfg.difficulty].skill).catch(() => {});
     setBoard(initial);
     setStartBoard(initial); // remember the starting position for replay
     setToMove('cho');

@@ -1,20 +1,28 @@
 import { useState } from 'react';
 import { Side, SideSetup, WingSetup } from './engine/types';
+import { Difficulty, DIFFICULTY_SETTINGS } from './engine/fairyEngine';
 
 export interface StartConfig {
   humanSide: Side;
   humanSetup: SideSetup;
+  difficulty: Difficulty;
 }
 
 interface Props {
   onStart: (config: StartConfig) => void;
 }
 
-type Step = 'side' | 'formation';
+type Step = 'side' | 'formation' | 'difficulty';
 
 const WING_LABEL: Record<WingSetup, string> = {
   'horse-outer': '마 / 상',
   'elephant-outer': '상 / 마',
+};
+
+const DIFF_DESC: Record<Difficulty, string> = {
+  easy: '가볍게 한 판',
+  normal: '적당한 상대',
+  hard: '최고 실력',
 };
 
 export function SetupScreen({ onStart }: Props) {
@@ -22,8 +30,9 @@ export function SetupScreen({ onStart }: Props) {
   const [side, setSide] = useState<Side>('cho');
   const [left, setLeft] = useState<WingSetup>('horse-outer');
   const [right, setRight] = useState<WingSetup>('horse-outer');
+  const [difficulty, setDifficulty] = useState<Difficulty>('normal');
 
-  const stepIndex = step === 'side' ? 0 : 1;
+  const stepIndex = step === 'side' ? 0 : step === 'formation' ? 1 : 2;
 
   return (
     <div className="setup">
@@ -31,7 +40,7 @@ export function SetupScreen({ onStart }: Props) {
       <p className="setup-sub">AI와 대전 · 시작 전에 설정을 골라주세요</p>
 
       <div className="stepper">
-        {['진영', '마·상 배치'].map((label, i) => (
+        {['진영', '마·상 배치', '난이도'].map((label, i) => (
           <div
             key={label}
             className={`step-dot ${i === stepIndex ? 'active' : ''} ${
@@ -111,12 +120,42 @@ export function SetupScreen({ onStart }: Props) {
             <button className="btn" onClick={() => setStep('side')}>
               이전
             </button>
+            <button className="btn primary" onClick={() => setStep('difficulty')}>
+              다음
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 'difficulty' && (
+        <div className="setup-card">
+          <h2>난이도</h2>
+          <p className="hint">AI의 실력을 고르세요. 언제든 새 게임에서 다시 바꿀 수 있어요.</p>
+
+          <div className="diff-list">
+            {(['easy', 'normal', 'hard'] as Difficulty[]).map((d) => (
+              <button
+                key={d}
+                className={`diff-btn ${difficulty === d ? 'active' : ''}`}
+                onClick={() => setDifficulty(d)}
+              >
+                <span className="diff-name">{DIFFICULTY_SETTINGS[d].label}</span>
+                <span className="diff-desc">{DIFF_DESC[d]}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="setup-nav two">
+            <button className="btn" onClick={() => setStep('formation')}>
+              이전
+            </button>
             <button
               className="btn primary"
               onClick={() =>
                 onStart({
                   humanSide: side,
                   humanSetup: { left, right },
+                  difficulty,
                 })
               }
             >
@@ -125,18 +164,6 @@ export function SetupScreen({ onStart }: Props) {
           </div>
         </div>
       )}
-
-      <footer className="setup-footer">
-        AI 엔진{' '}
-        <a
-          href="https://github.com/fairy-stockfish/Fairy-Stockfish"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Fairy-Stockfish
-        </a>{' '}
-        기반 · GPL-3.0. 소스 코드는 요청 시 제공합니다.
-      </footer>
     </div>
   );
 }

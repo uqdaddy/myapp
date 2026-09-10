@@ -19,6 +19,19 @@ type StockfishModule = {
 let modulePromise: Promise<StockfishModule> | null = null;
 let ready = false;
 
+// Difficulty levels map to a Fairy-Stockfish "Skill Level" (0..20) and a think
+// time. Lower skill = the engine deliberately makes weaker moves.
+export type Difficulty = 'easy' | 'normal' | 'hard';
+
+export const DIFFICULTY_SETTINGS: Record<
+  Difficulty,
+  { skill: number; timeMs: number; label: string }
+> = {
+  easy: { skill: 1, timeMs: 500, label: '쉬움' },
+  normal: { skill: 8, timeMs: 1000, label: '보통' },
+  hard: { skill: 20, timeMs: 2000, label: '어려움' },
+};
+
 // Collects listeners waiting for a specific line pattern.
 type LineHandler = (line: string) => void;
 const lineHandlers = new Set<LineHandler>();
@@ -162,6 +175,15 @@ export async function initEngine(): Promise<void> {
 
 export function isEngineReady(): boolean {
   return ready;
+}
+
+// Set the engine's playing strength. `level` is 0..20 (Fairy-Stockfish "Skill
+// Level"): lower = weaker / more mistakes, 20 = full strength.
+export async function setSkillLevel(level: number): Promise<void> {
+  const mod = await loadModule();
+  if (!ready) await initEngine();
+  const clamped = Math.max(-20, Math.min(20, Math.round(level)));
+  mod.postMessage(`setoption name Skill Level value ${clamped}`);
 }
 
 // Ask the engine for the best move in the given position.

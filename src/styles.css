@@ -401,17 +401,7 @@ body {
   font-size: 14px;
 }
 
-.setup-footer {
-  margin-top: auto;
-  padding-top: 16px;
-  text-align: center;
-  font-size: 11px;
-  color: #7a6b55;
-  line-height: 1.6;
-}
-.setup-footer a {
-  color: #b6a488;
-}
+
 
 .stepper {
   display: flex;
@@ -783,4 +773,36 @@ body {
   to {
     background: #e53935;
   }
+}
+
+/* Difficulty selection */
+.diff-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.diff-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 14px 16px;
+  border: 2px solid #5a4d43;
+  background: #4a413a;
+  border-radius: 12px;
+  color: #e6d9c2;
+  text-align: left;
+}
+.diff-btn.active {
+  border-color: #c8965a;
+  background: #574433;
+}
+.diff-name {
+  font-size: 17px;
+  font-weight: 800;
+  color: #f0d9a8;
+}
+.diff-desc {
+  font-size: 13px;
+  color: #b6a488;
 }
