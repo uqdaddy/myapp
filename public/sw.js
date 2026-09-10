@@ -1,10 +1,11 @@
-// Combined service worker:
-//  1) Injects COOP/COEP headers so SharedArrayBuffer (and the multithreaded
-//     Fairy-Stockfish WASM engine) works on hosts that can't set headers
-//     themselves (e.g. GitHub Pages). Based on coi-serviceworker (MIT).
-//  2) Offline-first runtime caching for the app shell/assets.
+// Service worker:
+//  1) Injects COOP/COEP headers so SharedArrayBuffer works on hosts that can't
+//     set headers (GitHub Pages). On hosts that already send them (Cloudflare
+//     Pages) this is simply redundant and harmless.
+//  2) Offline caching. NETWORK-FIRST so a new deploy is always picked up and we
+//     never get stuck serving a stale (possibly broken) old build.
 
-const CACHE = 'janggi-v2';
+const CACHE = 'janggi-v3';
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -17,7 +18,6 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Add cross-origin isolation headers to a response.
 function withCoiHeaders(response) {
   if (!response || response.status === 0) return response;
   const headers = new Headers(response.headers);
@@ -36,33 +36,26 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
   if (req.cache === 'only-if-cached' && req.mode !== 'same-origin') return;
 
-  // Navigation: network-first, fall back to cache, then add COI headers.
-  if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req)
-        .then((res) => {
-          caches.open(CACHE).then((c) => c.put(req, res.clone()));
-          return withCoiHeaders(res);
-        })
-        .catch(() =>
-          caches
-            .match(req)
-            .then((r) => r || caches.match('./index.html'))
-            .then((r) => (r ? withCoiHeaders(r) : Response.error()))
-        )
-    );
-    return;
-  }
-
-  // Static assets: cache-first, then network; always add COI headers so the
-  // engine's scripts/wasm load in a cross-origin-isolated context.
+  // Network-first for everything: always try the latest from the network,
+  // update the cache, and only fall back to cache when offline. This prevents
+  // stale index.html / JS / wasm from a previous build being served forever.
   event.respondWith(
-    caches.match(req).then((cached) => {
-      if (cached) return withCoiHeaders(cached);
-      return fetch(req).then((res) => {
-        caches.open(CACHE).then((c) => c.put(req, res.clone()));
+    fetch(req)
+      .then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
         return withCoiHeaders(res);
-      });
-    })
+      })
+      .catch(() =>
+        caches.match(req).then((cached) => {
+          if (cached) return withCoiHeaders(cached);
+          if (req.mode === 'navigate') {
+            return caches.match('./index.html').then((h) =>
+              h ? withCoiHeaders(h) : Response.error()
+            );
+          }
+          return Response.error();
+        })
+      )
   );
 });
