@@ -3,7 +3,7 @@ import { Board } from './Board';
 import { CapturedTray } from './CapturedTray';
 import { SetupScreen, StartConfig } from './SetupScreen';
 import { initialBoard } from './engine/board';
-import { applyMove, legalMovesFor, allLegalMoves } from './engine/moves';
+import { applyMove, legalMovesFor, allLegalMoves, findGeneral } from './engine/moves';
 import { getStatus } from './engine/game';
 import { initEngine, engineBestMove } from './engine/fairyEngine';
 import { playPlaceSound, unlockAudio } from './sound';
@@ -240,11 +240,15 @@ export default function App() {
       return status.winner === humanSide ? '상대가 둘 수 없습니다. 승리!' : '둘 곳이 없습니다. 패배…';
     }
     const turn = toMove === humanSide ? '내 차례' : 'AI 차례';
-    const check = status.check ? ' · 장군!' : '';
-    return `${turn} (${SIDE_NAME[toMove]})${check}`;
+    return `${turn} (${SIDE_NAME[toMove]})`;
   }, [status, toMove, humanSide]);
 
   const inCheck = status.kind === 'playing' && status.check;
+  // The general under check (the side to move's general) — highlighted on board.
+  const checkedKing = useMemo(
+    () => (inCheck ? findGeneral(board, toMove) : null),
+    [inCheck, board, toMove]
+  );
 
   // Game-over result for the overlay popup.
   const endResult = useMemo(() => {
@@ -286,6 +290,11 @@ export default function App() {
             ? 'AI가 생각하는 중…'
             : statusText}
       </div>
+      {inCheck && !gameOver && (
+        <div className="check-banner">
+          장군! {toMove === humanSide ? '내 궁이 위험합니다' : ''}
+        </div>
+      )}
 
       {/* Opponent (AI) tray at the top: shows pieces the AI captured. */}
       <CapturedTray
@@ -303,6 +312,7 @@ export default function App() {
           lastMove={lastMove}
           onCellTap={onCellTap}
           humanSide={humanSide}
+          checkedKing={checkedKing}
         />
 
         {endResult && (

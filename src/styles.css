@@ -709,3 +709,43 @@ body {
   color: #8a7a63;
   font-size: 13px;
 }
+
+/* Check (장군) indicators */
+.check-ring {
+  fill: none;
+  stroke: #ff3b30;
+  stroke-width: 3.5;
+  opacity: 0.9;
+  animation: checkPulse 0.9s ease-in-out infinite;
+}
+@keyframes checkPulse {
+  0%,
+  100% {
+    stroke-width: 2.5;
+    opacity: 0.55;
+  }
+  50% {
+    stroke-width: 5;
+    opacity: 1;
+  }
+}
+
+.check-banner {
+  margin: 0 12px 6px;
+  padding: 8px 12px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  background: #c62828;
+  border-radius: 8px;
+  animation: bannerFlash 0.8s ease-in-out infinite alternate;
+}
+@keyframes bannerFlash {
+  from {
+    background: #c62828;
+  }
+  to {
+    background: #e53935;
+  }
+}

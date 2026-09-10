@@ -8,6 +8,7 @@ interface Props {
   lastMove: Move | null;
   onCellTap: (r: number, c: number) => void;
   humanSide: Side;
+  checkedKing?: Pos | null; // general currently in check -> highlight it
 }
 
 const COLS = 9;
@@ -49,6 +50,7 @@ export function Board({
   lastMove,
   onCellTap,
   humanSide,
+  checkedKing,
 }: Props) {
   const flipped = humanSide === 'han';
   const sx = (c: number) => MARGIN + (flipped ? COLS - 1 - c : c) * GAP;
@@ -238,6 +240,16 @@ export function Board({
           <circle cx={sx(lastMove.from.c)} cy={sy(lastMove.from.r)} r={17} className="last-from" />
           <circle cx={sx(lastMove.to.c)} cy={sy(lastMove.to.r)} r={17} className="last-to" />
         </>
+      )}
+
+      {/* check highlight: pulsing red ring on the general that is in check */}
+      {checkedKing && (
+        <circle
+          cx={sx(checkedKing.c)}
+          cy={sy(checkedKing.r)}
+          r={22}
+          className="check-ring"
+        />
       )}
 
       {/* legal target markers */}
