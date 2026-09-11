@@ -1,5 +1,5 @@
 import { CBoard, CMove, CPos, CSide } from './engine/chess/types';
-import { CHESS_GLYPH } from './engine/chess/pieces';
+import { ChessPiece } from './ChessPiece';
 
 interface Props {
   board: CBoard;
@@ -170,16 +170,16 @@ export function ChessBoard({
             <g key={`cell${r}-${c}`} onClick={() => onCellTap(r, c)} style={{ cursor: 'pointer' }}>
               <rect x={x} y={y} width={SQ} height={SQ} fill="transparent" />
               {piece && (
-                <text
-                  x={x + SQ / 2}
-                  y={y + SQ / 2 + 1}
-                  className={`cpiece ${piece.side === 'white' ? 'cpiece-w' : 'cpiece-b'}`}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  filter={isSel ? 'url(#cSelGlow)' : 'url(#cPieceShadow)'}
-                >
-                  {CHESS_GLYPH[piece.type]}
-                </text>
+                <g filter={isSel ? 'url(#cSelGlow)' : undefined}>
+                  <ChessPiece
+                    type={piece.type}
+                    side={piece.side}
+                    size={SQ * 0.92}
+                    x={x + SQ * 0.04}
+                    y={y + SQ * 0.02}
+                    idPrefix={`cp-${r}-${c}`}
+                  />
+                </g>
               )}
               {target && (
                 <circle

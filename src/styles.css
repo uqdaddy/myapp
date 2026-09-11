@@ -1035,21 +1035,6 @@ body {
   font-weight: 700;
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
-/* piece glyphs: two-tone set (fill + outline) with a drop shadow */
-.cpiece {
-  font-size: 34px;
-  paint-order: stroke fill;
-}
-.cpiece-w {
-  fill: #f7f3ea;
-  stroke: #2a2320;
-  stroke-width: 1.4px;
-}
-.cpiece-b {
-  fill: #2b2b2b;
-  stroke: #efe6d5;
-  stroke-width: 1.1px;
-}
 /* highlights (square overlays) */
 .clast {
   fill: rgba(255, 214, 120, 0.38);
@@ -1086,37 +1071,8 @@ body {
   border-radius: 12px;
   background: #efdcb4;
 }
-.cpiece-glyph {
-  font-size: 34px;
-  line-height: 1;
-  paint-order: stroke fill;
-}
-.cpiece-glyph.cpiece-w {
-  color: #f7f3ea;
-  -webkit-text-stroke: 1.4px #2a2320;
-}
-.cpiece-glyph.cpiece-b {
-  color: #2b2b2b;
-  -webkit-text-stroke: 1.1px #efe6d5;
-}
 
 /* draw result card */
 .result-card.draw .result-title {
   color: #7a5a30;
-}
-
-/* chess glyphs in the game-select preview */
-.gs-cpiece {
-  font-size: 18px;
-  paint-order: stroke fill;
-}
-.gs-cpiece.cpiece-w {
-  fill: #f7f3ea;
-  stroke: #2a2320;
-  stroke-width: 1px;
-}
-.gs-cpiece.cpiece-b {
-  fill: #2b2b2b;
-  stroke: #efe6d5;
-  stroke-width: 0.8px;
 }

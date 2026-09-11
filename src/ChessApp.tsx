@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChessBoard } from './ChessBoard';
+import { ChessPiece } from './ChessPiece';
 import { initialState } from './engine/chess/board';
 import {
   allLegalMoves,
@@ -303,9 +304,9 @@ export function ChessApp({ onExit }: { onExit?: () => void }) {
                         doMove(mv);
                       }}
                     >
-                      <span className={`cpiece-glyph ${humanSide === 'white' ? 'cpiece-w' : 'cpiece-b'}`}>
-                        {{ queen: '♛', rook: '♜', bishop: '♝', knight: '♞' }[t]}
-                      </span>
+                      <svg viewBox="0 0 48 48" width="44" height="44" aria-label={t}>
+                        <ChessPiece type={t} side={humanSide} size={48} x={0} y={0} idPrefix={`promo-${t}`} />
+                      </svg>
                     </button>
                   );
                 })}
@@ -387,11 +388,15 @@ function ChessSetup({
         <p className="hint">백(White)이 먼저 둡니다. 흑을 고르면 AI가 선공합니다.</p>
         <div className="choice-grid">
           <button className={`choice ${side === 'white' ? 'active' : ''}`} onClick={() => setSide('white')}>
-            <span className="cpiece-glyph cpiece-w">♚</span>
+            <svg viewBox="0 0 44 44" width="40" height="40" aria-hidden>
+              <ChessPiece type="king" side="white" size={44} x={0} y={0} idPrefix="setup-w" />
+            </svg>
             <span>백 (선공)</span>
           </button>
           <button className={`choice ${side === 'black' ? 'active' : ''}`} onClick={() => setSide('black')}>
-            <span className="cpiece-glyph cpiece-b">♚</span>
+            <svg viewBox="0 0 44 44" width="40" height="40" aria-hidden>
+              <ChessPiece type="king" side="black" size={44} x={0} y={0} idPrefix="setup-b" />
+            </svg>
             <span>흑 (후공)</span>
           </button>
         </div>

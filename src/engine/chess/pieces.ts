@@ -1,18 +1,8 @@
 import { CPieceType } from './types';
 
-// We render both colors using the SOLID (filled) Unicode chess glyphs, then
-// color them via fill + outline stroke. This gives a clean two-tone set where
-// white pieces are light with a dark outline and black pieces are dark with a
-// light outline — far more legible at small sizes than mixing outline/solid
-// glyphs (♔ vs ♚), which render with inconsistent weights across fonts.
-export const CHESS_GLYPH: Record<CPieceType, string> = {
-  king: '\u265A', // ♚
-  queen: '\u265B', // ♛
-  rook: '\u265C', // ♜
-  bishop: '\u265D', // ♝
-  knight: '\u265E', // ♞
-  pawn: '\u265F', // ♟
-};
+// Chess pieces are drawn as SVG vector shapes (see ChessPiece.tsx), not glyphs,
+// so both colors share one silhouette and look 3D. This module now only holds
+// the Korean piece names used in the game record.
 
 // Korean names for the game record.
 export const CHESS_PIECE_KO: Record<CPieceType, string> = {

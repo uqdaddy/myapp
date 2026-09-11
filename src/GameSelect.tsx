@@ -1,4 +1,7 @@
 // Landing screen: choose which game to play (Janggi, Chess, or Gomoku).
+import { ChessPiece } from './ChessPiece';
+import { CPieceType } from './engine/chess/types';
+
 export type GameKind = 'janggi' | 'chess' | 'gomoku';
 
 interface Props {
@@ -232,11 +235,11 @@ function GomokuPreview() {
 function ChessPreview() {
   const CELL = 27; // 4x4 mini board inside the 120 canvas with a 6px inset
   const OFF = 6;
-  const glyphs: { r: number; c: number; g: string; white: boolean }[] = [
-    { r: 0, c: 1, g: '\u265C', white: false }, // black rook
-    { r: 1, c: 2, g: '\u265E', white: false }, // black knight
-    { r: 2, c: 1, g: '\u265F', white: true }, // white pawn
-    { r: 3, c: 2, g: '\u265B', white: true }, // white queen
+  const glyphs: { r: number; c: number; type: CPieceType; white: boolean }[] = [
+    { r: 0, c: 1, type: 'rook', white: false },
+    { r: 1, c: 2, type: 'knight', white: false },
+    { r: 2, c: 1, type: 'pawn', white: true },
+    { r: 3, c: 2, type: 'queen', white: true },
   ];
   return (
     <svg className="gs-prev" viewBox="0 0 120 120" role="img" aria-label="체스">
@@ -268,16 +271,15 @@ function ChessPreview() {
         ))
       )}
       {glyphs.map((p, i) => (
-        <text
+        <ChessPiece
           key={i}
-          x={OFF + p.c * CELL + CELL / 2}
-          y={OFF + p.r * CELL + CELL / 2 + 1}
-          className={`gs-cpiece ${p.white ? 'cpiece-w' : 'cpiece-b'}`}
-          textAnchor="middle"
-          dominantBaseline="central"
-        >
-          {p.g}
-        </text>
+          type={p.type}
+          side={p.white ? 'white' : 'black'}
+          size={CELL * 0.96}
+          x={OFF + p.c * CELL + CELL * 0.02}
+          y={OFF + p.r * CELL - CELL * 0.04}
+          idPrefix={`gsc-${i}`}
+        />
       ))}
     </svg>
   );
