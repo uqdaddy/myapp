@@ -55,23 +55,22 @@ export function ChessBoard({
         {/* light + dark WOOD squares: warm maple vs walnut, with a soft
             diagonal sheen. Distinct enough to contrast the ivory/charcoal
             pieces. */}
-        <linearGradient id="cLight" x1="0" y1="0" x2="0.85" y2="1">
-          <stop offset="0%" stopColor="#e7bd82" />
-          <stop offset="45%" stopColor="#d8a862" />
-          <stop offset="100%" stopColor="#bf8c46" />
+        <linearGradient id="cLight" gradientUnits="userSpaceOnUse" x1={0} y1={0} x2={W} y2={W}>
+          <stop offset="0%" stopColor="#e5c99a" />
+          <stop offset="100%" stopColor="#d1ae79" />
         </linearGradient>
-        <linearGradient id="cDark" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#9a6534" />
-          <stop offset="100%" stopColor="#7d4f26" />
+        <linearGradient id="cDark" gradientUnits="userSpaceOnUse" x1={0} y1={0} x2={W} y2={W}>
+          <stop offset="0%" stopColor="#93633f" />
+          <stop offset="100%" stopColor="#795133" />
         </linearGradient>
         {/* broad figure grain + fine grain for premium hardwood */}
         <filter id="cGrain" x="0" y="0" width="100%" height="100%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.006 0.055" numOctaves={5} seed={7} stitchTiles="stitch" result="n" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.012 0.16" numOctaves={3} seed={7} stitchTiles="stitch" result="n" />
           <feColorMatrix in="n" type="matrix"
             values="0 0 0 0 0.40
                     0 0 0 0 0.25
                     0 0 0 0 0.08
-                    0 0 0 0.55 0" />
+                    0.9 0 0 0 -0.2" />
         </filter>
         <filter id="cGrainFine" x="0" y="0" width="100%" height="100%">
           <feTurbulence type="fractalNoise" baseFrequency="0.02 0.5" numOctaves={3} seed={19} stitchTiles="stitch" result="n" />
@@ -79,7 +78,7 @@ export function ChessBoard({
             values="0 0 0 0 0.3
                     0 0 0 0 0.19
                     0 0 0 0 0.07
-                    0 0 0 0.2 0" />
+                    0.65 0 0 0 -0.15" />
         </filter>
         <filter id="cBorderGrain" x="0" y="0" width="100%" height="100%">
           <feTurbulence type="fractalNoise" baseFrequency="0.02 0.16" numOctaves={3} seed={4} stitchTiles="stitch" result="n" />
@@ -87,7 +86,7 @@ export function ChessBoard({
             values="0 0 0 0 0.14
                     0 0 0 0 0.08
                     0 0 0 0 0.03
-                    0 0 0 0.55 0" />
+                    0.8 0 0 0 -0.15" />
         </filter>
         <radialGradient id="cVignette" cx="50%" cy="46%" r="72%">
           <stop offset="60%" stopColor="rgba(0,0,0,0)" />
@@ -140,9 +139,10 @@ export function ChessBoard({
         })
       )}
       {/* wood grain across the whole playfield + vignette */}
-      <rect x={LABEL} y={LABEL} width={BOARD} height={BOARD} filter="url(#cGrain)" opacity={0.5} />
+      <rect x={LABEL} y={LABEL} width={BOARD} height={BOARD} filter="url(#cGrain)" opacity={0.65} />
       <rect x={LABEL} y={LABEL} width={BOARD} height={BOARD} filter="url(#cGrainFine)" opacity={0.35} />
       <rect x={LABEL} y={LABEL} width={BOARD} height={BOARD} fill="url(#cVignette)" />
+      <rect x={LABEL - 1.5} y={LABEL - 1.5} width={BOARD + 3} height={BOARD + 3} fill="none" stroke="#d6b680" strokeWidth={1} />
 
       {/* last-move highlight */}
       {lastMove && (
