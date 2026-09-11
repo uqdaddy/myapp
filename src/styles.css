@@ -818,74 +818,50 @@ body {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding: calc(env(safe-area-inset-top) + 8px) 16px calc(env(safe-area-inset-bottom) + 8px);
-  gap: 16px;
-  /* soft rice-paper wash */
-  background:
-    radial-gradient(120% 50% at 50% 0%, rgba(210, 180, 140, 0.12), transparent 62%),
-    #201b18;
+  justify-content: center;
+  padding: calc(env(safe-area-inset-top) + 24px) 16px calc(env(safe-area-inset-bottom) + 24px);
+  gap: 22px;
+  background: #201b18; /* plain background — no artwork */
 }
 .gs-header {
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-  height: 132px;
-  padding-bottom: 8px;
-}
-.gs-ink {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  opacity: 0.9;
-}
-.gs-title,
-.gs-sub {
-  position: relative;
-  z-index: 1;
+  gap: 6px;
 }
 .gs-title {
+  /* match the in-game titles: default UI font, same color/spacing */
   margin: 0;
   text-align: center;
   font-size: 30px;
-  letter-spacing: 4px;
+  letter-spacing: 3px;
   color: #f0d9a8;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-  font-family: 'Nanum Myeongjo', 'Apple SD Gothic Neo', serif;
 }
 .gs-sub {
   margin: 0;
   text-align: center;
-  color: #cbb996;
-  font-size: 13px;
+  color: #b6a488;
+  font-size: 14px;
 }
 
 .gs-grid {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  flex: 1;
-  justify-content: center;
 }
 
-/* horizontal banner card with a left color brush + right arrow */
+/* horizontal banner card — neutral tone matching the in-game panels */
 .gs-banner {
-  position: relative;
   display: flex;
   align-items: center;
   gap: 14px;
-  height: 108px;
-  padding: 0 16px 0 18px;
+  height: 104px;
+  padding: 0 16px 0 14px;
   border: 1px solid #55483d;
-  border-radius: 18px;
-  overflow: hidden;
+  border-radius: 16px;
   background: linear-gradient(150deg, #43392f 0%, #2f2823 100%);
   color: #e6d9c2;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 235, 200, 0.08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 235, 200, 0.07);
   transition: transform 0.12s ease, box-shadow 0.12s ease;
   text-align: left;
 }
@@ -893,24 +869,9 @@ body {
   transform: scale(0.985);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
-/* the diagonal color brush on the left, tinted by the game's accent */
-.gs-brush {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 42%;
-  z-index: 0;
-  background: var(--accent);
-  opacity: 0.92;
-  -webkit-mask-image: linear-gradient(100deg, #000 45%, rgba(0, 0, 0, 0.4) 70%, transparent 95%);
-  mask-image: linear-gradient(100deg, #000 45%, rgba(0, 0, 0, 0.4) 70%, transparent 95%);
-}
 .gs-banner-prev {
-  position: relative;
-  z-index: 1;
-  width: 82px;
-  height: 82px;
+  width: 80px;
+  height: 80px;
   flex-shrink: 0;
   border-radius: 12px;
   overflow: hidden;
@@ -922,56 +883,31 @@ body {
   display: block;
 }
 .gs-banner-text {
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 4px;
   flex: 1;
 }
 .gs-banner-name {
-  font-size: 26px;
-  font-weight: 900;
+  font-size: 24px;
+  font-weight: 800;
   letter-spacing: 2px;
-  color: #fbf1dc;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.45);
-  font-family: 'Nanum Myeongjo', 'Apple SD Gothic Neo', serif;
+  color: #f0d9a8;
 }
 .gs-banner-tag {
   font-size: 12px;
-  color: #d8c9ad;
+  color: #b6a488;
 }
 .gs-go {
-  position: relative;
-  z-index: 1;
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.25);
-}
-
-/* bottom bar (info) */
-.gs-footer-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 28px;
-  padding: 10px 0 4px;
-}
-.gs-foot-btn {
-  background: none;
-  border: none;
-  color: #8a7a63;
-  padding: 6px;
-  display: grid;
-  place-items: center;
-}
-.gs-foot-btn:active {
-  color: #cbb996;
+  color: #cdbda0;
+  background: #4a413a;
+  border: 1px solid #5a4d43;
 }
 
 /* glyphs used inside the janggi preview */
