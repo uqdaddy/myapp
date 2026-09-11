@@ -5,9 +5,28 @@ interface Props {
   onSelect: (game: GameKind) => void;
 }
 
-// Small SVG preview of a Janggi board corner with a couple of stones — gives
-// the card a real "feel" of the game instead of a single glyph.
+// A single shared 4x4 grid for both previews so lines and stones line up.
+// Intersections sit at these coordinates (gap = 25) inside a 120x120 canvas.
+const GRID = [20, 45, 70, 95];
+
+function octagon(cx: number, cy: number, r: number): string {
+  return Array.from({ length: 8 }, (_, i) => {
+    const a = (Math.PI / 4) * i - Math.PI / 8 - Math.PI / 2;
+    return `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`;
+  }).join(' ');
+}
+
+// Small SVG preview of a Janggi board with two pieces sitting exactly on grid
+// intersections (pieces are placed on line crossings in Janggi).
 function JanggiPreview() {
+  const lo = GRID[0];
+  const hi = GRID[GRID.length - 1];
+  // Pieces on intersections two cells apart so they never overlap.
+  const pieces = [
+    { cx: GRID[1], cy: GRID[2], label: '楚', cls: 'gs-p-cho' },
+    { cx: GRID[2], cy: GRID[1], label: '漢', cls: 'gs-p-han' },
+  ];
+  const R = 11;
   return (
     <svg className="gs-prev" viewBox="0 0 120 120" role="img" aria-label="장기">
       <defs>
@@ -22,38 +41,37 @@ function JanggiPreview() {
         </radialGradient>
       </defs>
       <rect x="2" y="2" width="116" height="116" rx="12" fill="url(#gsjWood)" stroke="#7a4e22" strokeWidth="3" />
-      {/* grid */}
-      {[26, 47, 68, 89].map((p) => (
+      {/* grid: horizontal + vertical lines at the SAME coordinates */}
+      {GRID.map((p) => (
         <g key={p}>
-          <line x1="26" y1={p} x2="94" y2={p} stroke="#5a3a18" strokeWidth="1" opacity="0.55" />
-          <line x1={p + 5} y1="26" x2={p + 5} y2="94" stroke="#5a3a18" strokeWidth="1" opacity="0.55" />
+          <line x1={lo} y1={p} x2={hi} y2={p} stroke="#5a3a18" strokeWidth="1" opacity="0.55" />
+          <line x1={p} y1={lo} x2={p} y2={hi} stroke="#5a3a18" strokeWidth="1" opacity="0.55" />
         </g>
       ))}
-      {/* two octagonal pieces */}
-      {[
-        { x: 42, y: 44, label: '楚', cls: 'gs-p-cho' },
-        { x: 76, y: 74, label: '漢', cls: 'gs-p-han' },
-      ].map((s) => {
-        const r = 15;
-        const pts = Array.from({ length: 8 }, (_, i) => {
-          const a = (Math.PI / 4) * i - Math.PI / 8 - Math.PI / 2;
-          return `${(s.x + r * Math.cos(a)).toFixed(1)},${(s.y + r * Math.sin(a)).toFixed(1)}`;
-        }).join(' ');
-        return (
-          <g key={s.label}>
-            <polygon points={pts} fill="url(#gsjFace)" stroke="#9a7538" strokeWidth="1" />
-            <text x={s.x} y={s.y + 1} className={`gs-glyph ${s.cls}`} textAnchor="middle" dominantBaseline="central">
-              {s.label}
-            </text>
-          </g>
-        );
-      })}
+      {/* octagonal pieces centered on intersections */}
+      {pieces.map((s) => (
+        <g key={s.label}>
+          <polygon points={octagon(s.cx, s.cy, R)} fill="url(#gsjFace)" stroke="#9a7538" strokeWidth="1" />
+          <text x={s.cx} y={s.cy + 0.5} className={`gs-glyph ${s.cls}`} textAnchor="middle" dominantBaseline="central">
+            {s.label}
+          </text>
+        </g>
+      ))}
     </svg>
   );
 }
 
-// Small SVG preview of a Gomoku board corner with black/white stones.
+// Small SVG preview of a Gomoku board with non-overlapping black/white stones
+// sitting on grid intersections (diameter < grid gap, so they never touch).
 function GomokuPreview() {
+  const lo = GRID[0];
+  const hi = GRID[GRID.length - 1];
+  const R = 10.5; // diameter 21 < gap 25 -> clear space between adjacent stones
+  const stones: { cx: number; cy: number; color: 'black' | 'white' }[] = [
+    { cx: GRID[1], cy: GRID[2], color: 'black' },
+    { cx: GRID[2], cy: GRID[2], color: 'white' },
+    { cx: GRID[2], cy: GRID[1], color: 'black' },
+  ];
   return (
     <svg className="gs-prev" viewBox="0 0 120 120" role="img" aria-label="오목">
       <defs>
@@ -73,20 +91,31 @@ function GomokuPreview() {
         </radialGradient>
       </defs>
       <rect x="2" y="2" width="116" height="116" rx="12" fill="url(#gsgWood)" stroke="#7a4e22" strokeWidth="3" />
-      {[24, 44, 64, 84].map((p) => (
+      {GRID.map((p) => (
         <g key={p}>
-          <line x1="24" y1={p} x2="96" y2={p} stroke="#3d2610" strokeWidth="1" opacity="0.6" />
-          <line x1={p} y1="24" x2={p} y2="96" stroke="#3d2610" strokeWidth="1" opacity="0.6" />
+          <line x1={lo} y1={p} x2={hi} y2={p} stroke="#3d2610" strokeWidth="1" opacity="0.6" />
+          <line x1={p} y1={lo} x2={p} y2={hi} stroke="#3d2610" strokeWidth="1" opacity="0.6" />
         </g>
       ))}
-      {/* three stones forming a little run */}
-      <circle cx="44" cy="64" r="10.5" fill="url(#gsgBlack)" />
-      <circle cx="64" cy="64" r="10.5" fill="url(#gsgWhite)" stroke="#b9b3a8" strokeWidth="0.5" />
-      <circle cx="64" cy="44" r="10.5" fill="url(#gsgBlack)" />
-      {/* specular highlights */}
-      <ellipse cx="40" cy="60" rx="3.4" ry="2.2" fill="rgba(255,255,255,0.55)" />
-      <ellipse cx="60" cy="60" rx="3.4" ry="2.2" fill="rgba(255,255,255,0.9)" />
-      <ellipse cx="60" cy="40" rx="3.4" ry="2.2" fill="rgba(255,255,255,0.55)" />
+      {stones.map((s, i) => (
+        <g key={i}>
+          <circle
+            cx={s.cx}
+            cy={s.cy}
+            r={R}
+            fill={s.color === 'black' ? 'url(#gsgBlack)' : 'url(#gsgWhite)'}
+            stroke={s.color === 'white' ? '#b9b3a8' : 'none'}
+            strokeWidth={s.color === 'white' ? 0.5 : 0}
+          />
+          <ellipse
+            cx={s.cx - R * 0.32}
+            cy={s.cy - R * 0.36}
+            rx={R * 0.3}
+            ry={R * 0.2}
+            fill={s.color === 'black' ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.9)'}
+          />
+        </g>
+      ))}
     </svg>
   );
 }
