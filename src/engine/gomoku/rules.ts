@@ -52,6 +52,33 @@ export function hasWon(b: GBoard, s: Stone): boolean {
   return false;
 }
 
+// Return the exact run of stones forming a win for `s` (5+ in a row), or null.
+// Used to highlight the winning line at game end.
+export function findWinningLine(b: GBoard, s: Stone): GPos[] | null {
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      if (b[idx(r, c)] !== s) continue;
+      for (const [dr, dc] of DIRS) {
+        // Only start counting at the beginning of a run (no same stone before).
+        const pr = r - dr;
+        const pc = c - dc;
+        if (inBounds(pr, pc) && b[idx(pr, pc)] === s) continue;
+        // Walk forward collecting the run.
+        const run: GPos[] = [];
+        let rr = r;
+        let cc = c;
+        while (inBounds(rr, cc) && b[idx(rr, cc)] === s) {
+          run.push({ r: rr, c: cc });
+          rr += dr;
+          cc += dc;
+        }
+        if (run.length >= 5) return run;
+      }
+    }
+  }
+  return null;
+}
+
 export function isEmpty(b: GBoard, r: number, c: number): boolean {
   return inBounds(r, c) && b[idx(r, c)] === null;
 }

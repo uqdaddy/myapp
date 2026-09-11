@@ -935,3 +935,50 @@ body {
 .glast.on-white {
   stroke: #d02020;
 }
+/* winning five-in-a-row highlight */
+.gwin-ring {
+  fill: none;
+  stroke: #ff3b30;
+  stroke-width: 2.5;
+  animation: winPulse 0.9s ease-in-out infinite;
+}
+.gwin-line {
+  stroke: rgba(255, 59, 48, 0.55);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+@keyframes winPulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* compact game-over result banner (does not cover the board) */
+.gresult {
+  margin: 0 12px 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  color: #fff;
+}
+.gresult.win {
+  background: #0a6d3a;
+}
+.gresult.lose {
+  background: #b02020;
+}
+.gresult-title {
+  font-size: 20px;
+  font-weight: 900;
+}
+.gresult-detail {
+  font-size: 13px;
+  opacity: 0.9;
+}

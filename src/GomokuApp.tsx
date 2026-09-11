@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GomokuBoard } from './GomokuBoard';
 import { emptyBoard, GBoard, GPos, idx, otherStone, Stone } from './engine/gomoku/types';
 import { gomokuStatus } from './engine/gomoku/game';
+import { findWinningLine } from './engine/gomoku/rules';
 import { chooseGomokuMove, GDifficulty, G_DIFFICULTY } from './engine/gomoku/ai';
 import type { GAiRequest, GAiResponse } from './engine/gomoku/aiWorker';
 
@@ -151,11 +152,17 @@ export function GomokuApp({ onExit }: { onExit?: () => void }) {
   const endResult = useMemo(() => {
     if (status.kind === 'win') {
       const win = status.winner === humanColor;
-      return { win, title: win ? '승리!' : '패배', detail: win ? '오목 완성 🎉' : '상대가 먼저 완성했어요' };
+      return { win, title: win ? '승리!' : '패배', detail: win ? '오목 완성!' : '상대가 먼저 완성했어요' };
     }
     if (status.kind === 'draw') return { win: false, title: '무승부', detail: '판이 가득 찼습니다' };
     return null;
   }, [status, humanColor]);
+
+  // The winning five (or more) in a row — highlighted on the board at game end.
+  const winningLine = useMemo(
+    () => (status.kind === 'win' ? findWinningLine(board, status.winner) : null),
+    [status, board]
+  );
 
   // ---- Setup screen ----
   if (phase === 'setup') {
@@ -219,25 +226,23 @@ export function GomokuApp({ onExit }: { onExit?: () => void }) {
     <div className="app">
       <div className="status-bar">{thinking ? 'AI가 생각하는 중…' : statusText}</div>
 
+      {/* Compact result banner ABOVE the board so the highlighted winning
+          line stays fully visible (no full-board popup). */}
+      {endResult && (
+        <div className={`gresult ${endResult.win ? 'win' : 'lose'}`}>
+          <span className="gresult-title">{endResult.title}</span>
+          <span className="gresult-detail">{endResult.detail}</span>
+        </div>
+      )}
+
       <div className="board-wrap">
         <GomokuBoard
           board={board}
           lastMove={lastMove}
           onCellTap={onCellTap}
           disabled={gameOver || thinking || toMove !== humanColor}
+          winningLine={winningLine}
         />
-
-        {endResult && (
-          <div className="result-overlay">
-            <div className={`result-card ${endResult.win ? 'win' : 'lose'}`}>
-              <div className="result-title">{endResult.title}</div>
-              <div className="result-detail">{endResult.detail}</div>
-              <button className="btn primary result-btn" onClick={backToSetup}>
-                새 게임
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="game-actions">

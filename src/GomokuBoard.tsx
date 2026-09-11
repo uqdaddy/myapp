@@ -5,6 +5,7 @@ interface Props {
   lastMove: GPos | null;
   onCellTap: (r: number, c: number) => void;
   disabled?: boolean;
+  winningLine?: GPos[] | null; // the 5+ stones that won — highlighted
 }
 
 const MARGIN = 24; // px padding from frame to the outer grid line
@@ -29,7 +30,8 @@ const STARS: [number, number][] = [
   [7, 7],
 ];
 
-export function GomokuBoard({ board, lastMove, onCellTap, disabled }: Props) {
+export function GomokuBoard({ board, lastMove, onCellTap, disabled, winningLine }: Props) {
+  const winSet = new Set((winningLine ?? []).map((p) => idx(p.r, p.c)));
   return (
     <svg
       className="gboard"
@@ -92,6 +94,9 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled }: Props) {
         </filter>
         <filter id="gBoardShadow" x="-12%" y="-12%" width="124%" height="124%">
           <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#000" floodOpacity="0.4" />
+        </filter>
+        <filter id="gWinGlow" x="-80%" y="-80%" width="260%" height="260%">
+          <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#ff3b30" floodOpacity="1" />
         </filter>
       </defs>
 
@@ -156,7 +161,7 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled }: Props) {
                     ry={R * 0.22}
                     fill={v === 'black' ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.85)'}
                   />
-                  {isLast && (
+                  {isLast && !winSet.has(idx(r, c)) && (
                     <circle
                       cx={px}
                       cy={py}
@@ -164,11 +169,25 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled }: Props) {
                       className={`glast ${v === 'black' ? 'on-black' : 'on-white'}`}
                     />
                   )}
+                  {winSet.has(idx(r, c)) && (
+                    <circle cx={px} cy={py} r={R + 1} className="gwin-ring" filter="url(#gWinGlow)" />
+                  )}
                 </g>
               )}
             </g>
           );
         })
+      )}
+
+      {/* connecting line through the winning stones */}
+      {winningLine && winningLine.length >= 2 && (
+        <line
+          x1={x(winningLine[0].c)}
+          y1={y(winningLine[0].r)}
+          x2={x(winningLine[winningLine.length - 1].c)}
+          y2={y(winningLine[winningLine.length - 1].r)}
+          className="gwin-line"
+        />
       )}
     </svg>
   );
