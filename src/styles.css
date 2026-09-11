@@ -811,92 +811,170 @@ body {
   color: #b6a488;
 }
 
-/* ---- Game select landing ---- */
+/* ---- Game select landing (ink-wash header + banner cards) ---- */
 .gameselect {
   max-width: 460px;
   margin: 0 auto;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  /* extra bottom padding raises the whole block so the cards land nearer the
-     true vertical center instead of below it */
-  padding: 24px 18px calc(env(safe-area-inset-bottom) + 96px);
-  gap: 22px;
+  padding: calc(env(safe-area-inset-top) + 8px) 16px calc(env(safe-area-inset-bottom) + 8px);
+  gap: 16px;
+  /* soft rice-paper wash */
   background:
-    radial-gradient(120% 60% at 50% 0%, rgba(200, 150, 90, 0.14), transparent 60%),
-    radial-gradient(90% 50% at 50% 100%, rgba(10, 109, 58, 0.1), transparent 60%);
+    radial-gradient(120% 50% at 50% 0%, rgba(210, 180, 140, 0.12), transparent 62%),
+    #201b18;
 }
 .gs-header {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  justify-content: flex-end;
+  gap: 4px;
+  height: 132px;
+  padding-bottom: 8px;
+}
+.gs-ink {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  opacity: 0.9;
+}
+.gs-title,
+.gs-sub {
+  position: relative;
+  z-index: 1;
 }
 .gs-title {
   margin: 0;
   text-align: center;
-  font-size: 32px;
+  font-size: 30px;
   letter-spacing: 4px;
   color: #f0d9a8;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  font-family: 'Nanum Myeongjo', 'Apple SD Gothic Neo', serif;
 }
 .gs-sub {
   margin: 0;
   text-align: center;
-  color: #b6a488;
-  font-size: 14px;
+  color: #cbb996;
+  font-size: 13px;
 }
+
 .gs-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 14px;
-}
-/* stacked cards get a horizontal layout: preview left, text right */
-.gs-grid .gs-card {
-  flex-direction: row;
-  align-items: center;
-  gap: 14px;
-  text-align: left;
-  padding: 14px 16px;
-}
-.gs-grid .gs-prev-wrap {
-  width: 84px;
-  flex-shrink: 0;
-}
-.gs-card-text {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 14px;
+  flex: 1;
+  justify-content: center;
 }
-.gs-card {
+
+/* horizontal banner card with a left color brush + right arrow */
+.gs-banner {
+  position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 18px 12px 16px;
-  border: 1px solid #6a5a4c;
-  background: linear-gradient(160deg, #443a33 0%, #332b26 100%);
+  gap: 14px;
+  height: 108px;
+  padding: 0 16px 0 18px;
+  border: 1px solid #55483d;
   border-radius: 18px;
+  overflow: hidden;
+  background: linear-gradient(150deg, #43392f 0%, #2f2823 100%);
   color: #e6d9c2;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 235, 200, 0.08);
-  transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 235, 200, 0.08);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  text-align: left;
 }
-.gs-card:active {
-  transform: scale(0.97);
-  border-color: #c8965a;
+.gs-banner:active {
+  transform: scale(0.985);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
-.gs-prev-wrap {
-  width: 100%;
+/* the diagonal color brush on the left, tinted by the game's accent */
+.gs-brush {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 42%;
+  z-index: 0;
+  background: var(--accent);
+  opacity: 0.92;
+  -webkit-mask-image: linear-gradient(100deg, #000 45%, rgba(0, 0, 0, 0.4) 70%, transparent 95%);
+  mask-image: linear-gradient(100deg, #000 45%, rgba(0, 0, 0, 0.4) 70%, transparent 95%);
+}
+.gs-banner-prev {
+  position: relative;
+  z-index: 1;
+  width: 82px;
+  height: 82px;
+  flex-shrink: 0;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 .gs-prev {
   width: 100%;
   height: auto;
   display: block;
 }
+.gs-banner-text {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+.gs-banner-name {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #fbf1dc;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.45);
+  font-family: 'Nanum Myeongjo', 'Apple SD Gothic Neo', serif;
+}
+.gs-banner-tag {
+  font-size: 12px;
+  color: #d8c9ad;
+}
+.gs-go {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+}
+
+/* bottom bar (info) */
+.gs-footer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 10px 0 4px;
+}
+.gs-foot-btn {
+  background: none;
+  border: none;
+  color: #8a7a63;
+  padding: 6px;
+  display: grid;
+  place-items: center;
+}
+.gs-foot-btn:active {
+  color: #cbb996;
+}
+
+/* glyphs used inside the janggi preview */
 .gs-glyph {
   /* font-size is set inline per stone so the glyph scales with the piece */
   font-weight: 900;
@@ -908,19 +986,8 @@ body {
 .gs-p-han {
   fill: #9e1515;
 }
-/* pale emboss copy under the colored glyph, matching the real board pieces */
 .gs-p-emboss {
   fill: rgba(255, 250, 235, 0.6);
-}
-.gs-name {
-  font-size: 19px;
-  font-weight: 800;
-  color: #f0d9a8;
-  letter-spacing: 1px;
-}
-.gs-tag {
-  font-size: 11px;
-  color: #a99a80;
 }
 
 /* back-to-menu link on setup screens */

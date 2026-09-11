@@ -18,97 +18,84 @@ interface Props {
   idPrefix: string; // unique gradient id namespace (avoid clashes)
 }
 
-// Silhouette path per piece in the 100x100 space. Kept intentionally clean and
-// chunky so it reads at small sizes.
+// Each piece is ONE continuous, left-right symmetric silhouette that includes
+// its own base sitting on the ground line (y≈86). Drawing the whole piece as a
+// single path (head → body → base) avoids the earlier "top and bottom split"
+// look where a separate floating base plate didn't line up with the body.
+// All shapes are centered on x=50.
 const PATHS: Record<CPieceType, string> = {
-  // Pawn: ball head, waisted neck, flared skirt to the base.
+  // Pawn: round head, waist, flared skirt, base.
   pawn:
-    'M50 22 a10 10 0 0 1 5 18 c4 3 6 6 6 10 c-2 2 -4 4 -4 7 c4 4 7 9 8 15 h-30 c1 -6 4 -11 8 -15 c0 -3 -2 -5 -4 -7 c0 -4 2 -7 6 -10 a10 10 0 0 1 5 -18 z',
-  // Rook: three crenellations, waisted body, wide foot.
+    'M50 20 a9 9 0 0 0 -5 16 c-4 2 -6 6 -4 10 c1 2 3 3 5 4 l-5 20 h-9 v10 h46 v-10 h-9 l-5 -20 c2 -1 4 -2 5 -4 c2 -4 0 -8 -4 -10 a9 9 0 0 0 -5 -16 z',
+  // Rook: crenellated top, body, base.
   rook:
-    'M33 26 h6 v6 h7 v-6 h8 v6 h7 v-6 h6 v13 l-5 5 v3 h-27 v-3 l-5 -5 z ' +
-    'M36 47 h28 l3 24 h-34 z',
-  // Knight: horse-head profile facing right (ears, muzzle, jaw, neck).
-  knight:
-    'M38 72 c-2 -14 2 -22 10 -30 c-3 -1 -6 0 -9 3 c-3 -5 -1 -11 4 -15 c1 -4 3 -8 7 -11 c1 3 1 5 0 7 c4 -3 8 -4 12 -3 c9 3 15 12 16 24 c1 9 1 18 1 25 z',
-  // Bishop: pointed mitre with a diagonal slit, round head, collar.
+    'M32 22 v10 h6 v-5 h6 v5 h6 v-5 h6 v5 h6 v-5 h6 v-10 h-6 v5 h-7 v-5 h-8 v5 h-7 v-5 z ' +
+    'M36 34 h28 l-3 34 h6 v12 h-40 v-12 h6 z',
+  // Bishop: cross-slit mitre, round head, collar, base.
   bishop:
-    'M50 20 c9 6 15 15 15 25 c0 6 -3 10 -6 13 c3 3 5 7 6 13 h-30 c1 -6 3 -10 6 -13 c-3 -3 -6 -7 -6 -13 c0 -10 6 -19 15 -25 z',
-  // Queen: five-point coronet on a bell body.
+    'M50 16 c8 6 14 16 14 25 c0 6 -3 10 -7 13 c2 2 4 5 5 9 h-24 c1 -4 3 -7 5 -9 c-4 -3 -7 -7 -7 -13 c0 -9 6 -19 14 -25 z ' +
+    'M34 65 h32 v6 h5 v9 h-42 v-9 h5 z',
+  // Knight: horse-head profile (symmetric-ish about the body) + base.
+  knight:
+    'M44 20 c-4 3 -7 8 -8 14 c-4 2 -8 6 -9 12 c3 -2 6 -3 9 -3 c-4 6 -6 12 -6 20 h34 c1 -18 -1 -34 -8 -44 c-2 -3 -5 -6 -12 -8 z ' +
+    'M31 65 h38 v6 h5 v9 h-48 v-9 h5 z',
+  // Queen: coronet of points, bell body, base.
   queen:
-    'M27 40 a4 4 0 1 0 0.1 0 z M50 30 a4 4 0 1 0 0.1 0 z M73 40 a4 4 0 1 0 0.1 0 z ' +
-    'M30 42 l7 16 l6 -22 l7 22 l7 -22 l6 22 l7 -16 l-3 30 h-41 z',
-  // King: cross finial on a crowned bell body.
+    'M30 30 l5 22 l7 -20 l8 20 l8 -20 l7 20 l5 -22 l-3 34 h-34 z ' +
+    'M32 66 h36 v5 h5 v9 h-46 v-9 h5 z',
+  // King: cross finial, crowned bell body, base.
   king:
-    'M47 16 h6 v6 h6 v6 h-6 v7 c9 4 15 13 15 23 c0 6 -3 10 -6 14 h-30 c-3 -4 -6 -8 -6 -14 c0 -10 6 -19 15 -23 v-7 h-6 v-6 h6 z',
+    'M46 14 h8 v6 h6 v7 h-6 v6 c8 4 14 13 14 22 c0 4 -1 7 -3 10 h-30 c-2 -3 -3 -6 -3 -10 c0 -9 6 -18 14 -22 v-6 h-6 v-7 h6 z ' +
+    'M32 66 h36 v5 h5 v9 h-46 v-9 h5 z',
 };
 
-// Base ellipse (the piece stands on it) drawn separately for all types.
 export function ChessPiece({ type, side, size, x, y, idPrefix }: Props) {
   const s = size / 100;
   const white = side === 'white';
   const bodyGrad = `${idPrefix}-body`;
-  const baseGrad = `${idPrefix}-base`;
 
   return (
     <g transform={`translate(${x} ${y}) scale(${s})`}>
       <defs>
         {/* body: lit from upper-left, darker lower-right for roundness */}
-        <radialGradient id={bodyGrad} cx="38%" cy="30%" r="80%">
+        <radialGradient id={bodyGrad} cx="38%" cy="28%" r="85%">
           {white ? (
             <>
               <stop offset="0%" stopColor="#ffffff" />
               <stop offset="45%" stopColor="#f2ead6" />
-              <stop offset="100%" stopColor="#c9b58c" />
+              <stop offset="100%" stopColor="#c3ad82" />
             </>
           ) : (
             <>
-              <stop offset="0%" stopColor="#6b6b6f" />
-              <stop offset="38%" stopColor="#3a3a3e" />
-              <stop offset="100%" stopColor="#161618" />
+              <stop offset="0%" stopColor="#6f6f74" />
+              <stop offset="40%" stopColor="#3a3a3e" />
+              <stop offset="100%" stopColor="#141416" />
             </>
           )}
         </radialGradient>
-        <linearGradient id={baseGrad} x1="0" y1="0" x2="0" y2="1">
-          {white ? (
-            <>
-              <stop offset="0%" stopColor="#f2ead6" />
-              <stop offset="100%" stopColor="#b9a377" />
-            </>
-          ) : (
-            <>
-              <stop offset="0%" stopColor="#3a3a3e" />
-              <stop offset="100%" stopColor="#111113" />
-            </>
-          )}
-        </linearGradient>
       </defs>
 
-      {/* contact shadow on the square */}
-      <ellipse cx={50} cy={92} rx={28} ry={6} fill="rgba(0,0,0,0.32)" />
+      {/* contact shadow on the square, under the base */}
+      <ellipse cx={50} cy={84} rx={26} ry={5.5} fill="rgba(0,0,0,0.3)" />
 
-      {/* base plate (two stacked ellipses for a turned-wood look) */}
-      <ellipse cx={50} cy={86} rx={26} ry={7.5} fill={`url(#${baseGrad})`} stroke={white ? '#8f7a4f' : '#000'} strokeWidth={1} />
-      <rect x={26} y={78} width={48} height={8} fill={`url(#${baseGrad})`} />
-      <ellipse cx={50} cy={78} rx={24} ry={6.5} fill={`url(#${baseGrad})`} />
-
-      {/* body silhouette */}
+      {/* the whole piece as one continuous silhouette */}
       <path
         d={PATHS[type]}
         fill={`url(#${bodyGrad})`}
-        stroke={white ? '#8f7a4f' : '#050506'}
+        stroke={white ? '#8a7448' : '#050506'}
         strokeWidth={1.6}
         strokeLinejoin="round"
+        strokeLinecap="round"
       />
 
       {/* specular highlight, upper-left of the body */}
       <ellipse
-        cx={42}
+        cx={43}
         cy={40}
-        rx={7}
-        ry={12}
-        fill={white ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.16)'}
-        transform="rotate(-18 42 40)"
+        rx={6}
+        ry={11}
+        fill={white ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.15)'}
+        transform="rotate(-16 43 40)"
       />
     </g>
   );

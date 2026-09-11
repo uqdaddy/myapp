@@ -1,4 +1,5 @@
 // Landing screen: choose which game to play (Janggi, Chess, or Gomoku).
+import type { ReactElement } from 'react';
 import { ChessPiece } from './ChessPiece';
 import { CPieceType } from './engine/chess/types';
 
@@ -285,43 +286,101 @@ function ChessPreview() {
   );
 }
 
+// Ink-wash header backdrop: faint mountains + an enso (brush circle) + a soft
+// sun, drawn as SVG so it stays crisp and matches the vector house style.
+function InkHeader() {
+  return (
+    <svg className="gs-ink" viewBox="0 0 400 120" preserveAspectRatio="xMidYMid slice" aria-hidden>
+      <defs>
+        <radialGradient id="gs-sun" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="rgba(200,90,60,0.55)" />
+          <stop offset="100%" stopColor="rgba(200,90,60,0)" />
+        </radialGradient>
+        <linearGradient id="gs-mtn" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="rgba(120,110,100,0.30)" />
+          <stop offset="100%" stopColor="rgba(120,110,100,0)" />
+        </linearGradient>
+      </defs>
+      <circle cx="205" cy="52" r="34" fill="url(#gs-sun)" />
+      {/* enso brush ring */}
+      <path
+        d="M232 34 a34 34 0 1 0 10 22"
+        fill="none"
+        stroke="rgba(40,34,30,0.5)"
+        strokeWidth="6"
+        strokeLinecap="round"
+      />
+      {/* distant mountains */}
+      <path d="M0 120 L60 70 L110 100 L170 55 L230 98 L300 62 L360 96 L400 74 L400 120 Z" fill="url(#gs-mtn)" />
+    </svg>
+  );
+}
+
+const GAMES: {
+  kind: GameKind;
+  name: string;
+  tag: string;
+  accent: string;
+  Preview: () => ReactElement;
+}[] = [
+  { kind: 'janggi', name: '장기', tag: '한국식 장기 · AI 대국', accent: '#b02828', Preview: JanggiPreview },
+  { kind: 'chess', name: '체스', tag: '국제 체스 · AI 대국', accent: '#2f5aa8', Preview: ChessPreview },
+  { kind: 'gomoku', name: '오목', tag: '15×15 자유형 · AI 대국', accent: '#1f7a46', Preview: GomokuPreview },
+];
+
 export function GameSelect({ onSelect }: Props) {
   return (
     <div className="gameselect">
       <div className="gs-header">
+        <InkHeader />
         <h1 className="gs-title">보드게임</h1>
         <p className="gs-sub">AI와 대전할 게임을 골라주세요</p>
       </div>
 
       <div className="gs-grid">
-        <button className="gs-card" onClick={() => onSelect('janggi')}>
-          <span className="gs-prev-wrap">
-            <JanggiPreview />
-          </span>
-          <span className="gs-card-text">
-            <span className="gs-name">장기</span>
-            <span className="gs-tag">한국식 장기 · AI 대국</span>
-          </span>
-        </button>
+        {GAMES.map(({ kind, name, tag, accent, Preview }) => (
+          <button
+            key={kind}
+            className="gs-banner"
+            style={{ ['--accent' as string]: accent }}
+            onClick={() => onSelect(kind)}
+          >
+            {/* left color brush */}
+            <span className="gs-brush" aria-hidden />
+            {/* game vector preview */}
+            <span className="gs-banner-prev">
+              <Preview />
+            </span>
+            {/* title + tag */}
+            <span className="gs-banner-text">
+              <span className="gs-banner-name">{name}</span>
+              <span className="gs-banner-tag">{tag}</span>
+            </span>
+            {/* right circular arrow */}
+            <span className="gs-go" aria-hidden>
+              <svg viewBox="0 0 24 24" width="20" height="20">
+                <path d="M9 6l6 6-6 6" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+          </button>
+        ))}
+      </div>
 
-        <button className="gs-card" onClick={() => onSelect('chess')}>
-          <span className="gs-prev-wrap">
-            <ChessPreview />
-          </span>
-          <span className="gs-card-text">
-            <span className="gs-name">체스</span>
-            <span className="gs-tag">국제 체스 · AI 대국</span>
-          </span>
-        </button>
-
-        <button className="gs-card" onClick={() => onSelect('gomoku')}>
-          <span className="gs-prev-wrap">
-            <GomokuPreview />
-          </span>
-          <span className="gs-card-text">
-            <span className="gs-name">오목</span>
-            <span className="gs-tag">15×15 자유형 · AI 대국</span>
-          </span>
+      <div className="gs-footer-bar">
+        <button
+          className="gs-foot-btn"
+          aria-label="정보"
+          onClick={() =>
+            alert(
+              '보드게임 · 브라우저에서 AI와 대전하는 장기 / 체스 / 오목.\n서버 없이 동작하며, 장기·체스는 Fairy-Stockfish 엔진을 사용합니다.'
+            )
+          }
+        >
+          <svg viewBox="0 0 24 24" width="22" height="22">
+            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.8" />
+            <circle cx="12" cy="8" r="1.3" fill="currentColor" />
+            <path d="M12 11v6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
         </button>
       </div>
     </div>
