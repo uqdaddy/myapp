@@ -125,16 +125,17 @@ export function Board({
 
         {/* ivory stone face, lit from top-left with a soft specular sheen */}
         <radialGradient id="stoneFace" cx="35%" cy="28%" r="82%">
-          <stop offset="0%" stopColor="#fffbf0" />
-          <stop offset="30%" stopColor="#f7ebca" />
-          <stop offset="70%" stopColor="#e6d0a1" />
-          <stop offset="100%" stopColor="#c6a771" />
+          <stop offset="0%" stopColor="#fffdf5" />
+          <stop offset="28%" stopColor="#f9eecf" />
+          <stop offset="68%" stopColor="#e6d0a1" />
+          <stop offset="100%" stopColor="#bd9d68" />
         </radialGradient>
-        {/* wooden rim of the disc, darker at the bottom for thickness */}
-        <linearGradient id="stoneRim" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#e0c68f" />
-          <stop offset="55%" stopColor="#b8965b" />
-          <stop offset="100%" stopColor="#8a6a3a" />
+        {/* wooden rim of the disc: bright top-left, deep shadow bottom-right,
+            giving each stone a rounded, chunky thickness. */}
+        <linearGradient id="stoneRim" x1="0.15" y1="0" x2="0.85" y2="1">
+          <stop offset="0%" stopColor="#efd9a8" />
+          <stop offset="45%" stopColor="#b8965b" />
+          <stop offset="100%" stopColor="#71531f" />
         </linearGradient>
         {/* subtle grain on each stone face */}
         <filter id="stoneGrain" x="-20%" y="-20%" width="140%" height="140%">
@@ -291,6 +292,13 @@ export function Board({
                     <g filter={isSel ? 'url(#selGlow)' : 'url(#pieceShadow)'}>
                       {/* wooden rim (edge thickness) */}
                       <polygon points={octagonPoints(px, py, rad)} fill="url(#stoneRim)" />
+                      {/* thin dark seam between rim and face for definition */}
+                      <polygon
+                        points={octagonPoints(px, py, faceR + 0.9)}
+                        fill="none"
+                        stroke="rgba(70,45,15,0.45)"
+                        strokeWidth={0.8}
+                      />
                       {/* ivory face slightly inset */}
                       <polygon
                         points={octagonPoints(px, py, faceR)}
@@ -307,9 +315,9 @@ export function Board({
                       <ellipse
                         cx={px - rad * 0.28}
                         cy={py - rad * 0.34}
-                        rx={rad * 0.5}
-                        ry={rad * 0.32}
-                        fill="rgba(255,255,255,0.4)"
+                        rx={rad * 0.52}
+                        ry={rad * 0.34}
+                        fill="rgba(255,255,255,0.45)"
                       />
                       {/* top bevel highlight edge */}
                       <polygon points={octagonPoints(px, py, faceR)} className="piece-edge" />
@@ -318,6 +326,18 @@ export function Board({
                         points={octagonPoints(px, py, rad - 4.6)}
                         className={`piece-inner inner-${piece.side}`}
                       />
+                      {/* engraving highlight: a pale copy offset down-right,
+                          so the colored glyph reads as carved into the ivory */}
+                      <text
+                        x={px + 0.7}
+                        y={py + 1.2}
+                        style={{ fontSize }}
+                        className="piece-label piece-label-emboss"
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                      >
+                        {PIECE_LABEL[piece.side][piece.type]}
+                      </text>
                       <text
                         x={px}
                         y={py + 0.5}

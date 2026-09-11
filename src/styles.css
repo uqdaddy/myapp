@@ -188,10 +188,14 @@ body {
     serif; /* calligraphic feel like real Janggi engraving */
 }
 .label-cho {
-  fill: #075a30;
+  fill: #06502a;
 }
 .label-han {
-  fill: #9e1515;
+  fill: #921212;
+}
+/* pale emboss copy sitting under the colored glyph */
+.piece-label-emboss {
+  fill: rgba(255, 250, 235, 0.6);
 }
 
 .target-dot {
@@ -809,24 +813,48 @@ body {
 
 /* ---- Game select landing ---- */
 .gameselect {
-  max-width: 440px;
+  max-width: 460px;
   margin: 0 auto;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: 24px 18px calc(env(safe-area-inset-bottom) + 24px);
-  gap: 8px;
+  gap: 22px;
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(200, 150, 90, 0.14), transparent 60%),
+    radial-gradient(90% 50% at 50% 100%, rgba(10, 109, 58, 0.1), transparent 60%);
+}
+.gs-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.gs-logo {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  font-size: 42px;
+  font-weight: 900;
+  font-family: 'Nanum Myeongjo', 'Apple SD Gothic Neo', serif;
+  color: #f7ecc9;
+  background: radial-gradient(circle at 36% 30%, #b98a4a, #6e451f);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 225, 170, 0.35);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45), inset 0 1px 2px rgba(255, 240, 210, 0.5);
+  margin-bottom: 4px;
 }
 .gs-title {
   margin: 0;
   text-align: center;
-  font-size: 30px;
-  letter-spacing: 3px;
+  font-size: 32px;
+  letter-spacing: 4px;
   color: #f0d9a8;
 }
 .gs-sub {
-  margin: 0 0 16px;
+  margin: 0;
   text-align: center;
   color: #b6a488;
   font-size: 14px;
@@ -840,48 +868,51 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 26px 12px;
-  border: 2px solid #5a4d43;
-  background: #3a322d;
-  border-radius: 16px;
+  gap: 10px;
+  padding: 18px 12px 16px;
+  border: 1px solid #6a5a4c;
+  background: linear-gradient(160deg, #443a33 0%, #332b26 100%);
+  border-radius: 18px;
   color: #e6d9c2;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 235, 200, 0.08);
+  transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
 }
-.gs-icon {
-  width: 64px;
-  height: 64px;
-  display: grid;
-  place-items: center;
-  font-size: 40px;
+.gs-card:active {
+  transform: scale(0.97);
+  border-color: #c8965a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+.gs-prev-wrap {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+.gs-prev {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.gs-glyph {
+  font-size: 17px;
   font-weight: 900;
   font-family: 'Nanum Myeongjo', 'Apple SD Gothic Neo', serif;
 }
-.gs-icon.janggi {
-  color: #0a6d3a;
+.gs-p-cho {
+  fill: #075a30;
 }
-.gs-icon.gomoku {
-  position: relative;
-}
-.gs-stone {
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-}
-.gs-stone.black {
-  background: radial-gradient(circle at 38% 32%, #6a6a6a, #000);
-  left: 6px;
-  top: 16px;
-}
-.gs-stone.white {
-  background: radial-gradient(circle at 38% 32%, #fff, #c8c8c8);
-  right: 6px;
-  top: 22px;
+.gs-p-han {
+  fill: #9e1515;
 }
 .gs-name {
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 800;
   color: #f0d9a8;
+  letter-spacing: 1px;
+}
+.gs-tag {
+  font-size: 11px;
+  color: #a99a80;
 }
 
 /* back-to-menu link on setup screens */

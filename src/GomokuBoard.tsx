@@ -43,13 +43,14 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled, winningLine 
       <defs>
         {/* board wood base + border */}
         <linearGradient id="gWood" x1="0" y1="0" x2="0.9" y2="1">
-          <stop offset="0%" stopColor="#f2cf8c" />
-          <stop offset="45%" stopColor="#e6b96f" />
-          <stop offset="100%" stopColor="#d3a057" />
+          <stop offset="0%" stopColor="#f4d59a" />
+          <stop offset="45%" stopColor="#e8bd7b" />
+          <stop offset="100%" stopColor="#d6a862" />
         </linearGradient>
         <linearGradient id="gBorder" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#8a5a2c" />
-          <stop offset="100%" stopColor="#5a3818" />
+          <stop offset="50%" stopColor="#6e451f" />
+          <stop offset="100%" stopColor="#4a2d12" />
         </linearGradient>
         {/* procedural wood grain */}
         <filter id="gGrain" x="0" y="0" width="100%" height="100%">
@@ -110,9 +111,30 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled, winningLine 
         fill="url(#gBorder)"
         filter="url(#gBoardShadow)"
       />
+      {/* inner frame bevel: dark groove + bright inner edge */}
+      <rect
+        x={-PAD / 2}
+        y={-PAD / 2}
+        width={W + PAD}
+        height={W + PAD}
+        rx={7}
+        fill="none"
+        stroke="rgba(0,0,0,0.32)"
+        strokeWidth={1.5}
+      />
+      <rect
+        x={-PAD / 2 + 1.5}
+        y={-PAD / 2 + 1.5}
+        width={W + PAD - 3}
+        height={W + PAD - 3}
+        rx={6}
+        fill="none"
+        stroke="rgba(255,228,175,0.28)"
+        strokeWidth={1}
+      />
       {/* playing surface + grain + vignette */}
       <rect x={0} y={0} width={W} height={W} rx={3} fill="url(#gWood)" />
-      <rect x={0} y={0} width={W} height={W} rx={3} filter="url(#gGrain)" opacity={0.5} />
+      <rect x={0} y={0} width={W} height={W} rx={3} filter="url(#gGrain)" opacity={0.45} />
       <rect x={0} y={0} width={W} height={W} rx={3} fill="url(#gVignette)" />
 
       {/* grid lines */}
@@ -125,7 +147,7 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled, winningLine 
 
       {/* star points */}
       {STARS.map(([r, c], i) => (
-        <circle key={`s${i}`} cx={x(c)} cy={y(r)} r={3.5} className="gstar" />
+        <circle key={`s${i}`} cx={x(c)} cy={y(r)} r={4} className="gstar" />
       ))}
 
       {/* stones + tap zones */}
@@ -150,16 +172,24 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled, winningLine 
                     cy={py}
                     r={R}
                     fill={v === 'black' ? 'url(#blackStone)' : 'url(#whiteStone)'}
-                    stroke={v === 'white' ? 'rgba(150,145,135,0.6)' : 'none'}
-                    strokeWidth={v === 'white' ? 0.6 : 0}
+                    stroke={v === 'white' ? 'rgba(150,145,135,0.6)' : 'rgba(0,0,0,0.5)'}
+                    strokeWidth={0.6}
                   />
-                  {/* specular highlight */}
+                  {/* broad soft sheen */}
+                  <ellipse
+                    cx={px - R * 0.26}
+                    cy={py - R * 0.3}
+                    rx={R * 0.56}
+                    ry={R * 0.44}
+                    fill={v === 'black' ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.4)'}
+                  />
+                  {/* tight specular highlight */}
                   <ellipse
                     cx={px - R * 0.3}
                     cy={py - R * 0.36}
-                    rx={R * 0.34}
-                    ry={R * 0.22}
-                    fill={v === 'black' ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.85)'}
+                    rx={R * 0.3}
+                    ry={R * 0.2}
+                    fill={v === 'black' ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.95)'}
                   />
                   {isLast && !winSet.has(idx(r, c)) && (
                     <circle
