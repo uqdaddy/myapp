@@ -30,73 +30,97 @@ function Base({ fill, stroke, sw }: { fill: string; stroke: string; sw: number }
   );
 }
 
-// Body (everything above the base, ~ y 8..74) per piece.
+// Body (everything above the base) per piece. All symmetric about x=45 except
+// the knight (a horse head is inherently a profile).
 function Body({ type, fill, stroke, sw }: { type: CPieceType; fill: string; stroke: string; sw: number }) {
   const p = { fill, stroke, strokeWidth: sw, strokeLinejoin: 'round' as const, strokeLinecap: 'round' as const };
   switch (type) {
     case 'pawn':
       return (
         <>
-          <circle cx={45} cy={30} r={11} {...p} />
-          <path d="M34 46 q11 7 22 0 q3 16 6 28 h-34 q3 -12 6 -28 z" {...p} />
+          <circle cx={45} cy={28} r={11} {...p} />
+          {/* symmetric collar + flared stem */}
+          <path d="M35 44 q10 6 20 0 l-3 6 q7 5 8 24 h-30 q1 -19 8 -24 z" {...p} />
         </>
       );
     case 'rook':
       return (
         <>
-          {/* crenellated top */}
-          <path d="M27 20 h7 v6 h6 v-6 h8 v6 h6 v-6 h7 v14 h-40 z" {...p} />
-          {/* neck + flared body */}
-          <path d="M31 34 h28 l-3 10 q6 6 6 30 h-34 q0 -24 6 -30 z" {...p} />
+          {/* crenellated top (4 merlons, symmetric) */}
+          <path d="M26 18 h8 v6 h5 v-6 h12 v6 h5 v-6 h8 v14 h-38 z" {...p} />
+          {/* neck ring */}
+          <path d="M30 32 h30 l-2 7 h-26 z" {...p} />
+          {/* flared body */}
+          <path d="M32 39 h26 q4 18 8 33 h-42 q4 -15 8 -33 z" {...p} />
         </>
       );
-    case 'knight':
-      // Horse head facing left — one clean silhouette.
+    case 'knight': {
+      // Staunton horse head facing left. Outline traced clockwise from the
+      // chest (lower left): up the front of the neck, jaw, MUZZLE jutting left,
+      // up the nose bridge to the brow, back over the head to a pointed EAR,
+      // then down the arched mane (right) to the neck base.
       return (
-        <path
-          d="M55 74 q3 -8 3 -18 q0 -18 -12 -26 q3 -3 3 -8 q-9 1 -15 9 q-5 6 -8 15 q-3 3 -5 9 q3 2 7 0 q-2 5 -6 8 q3 4 9 4 q-3 6 -3 12 q0 6 2 10 z"
-          {...p}
-        />
+        <>
+          <path
+            d="M27 74 C28 63 39 57 43 47
+               L36 44 L29 50 L19 46 L20 38 L34 24
+               L38 13 L46 21 L52 16 L53 25
+               C67 30 73 48 68 74 Z"
+            {...p}
+          />
+          {/* eye */}
+          <circle cx={37} cy={33} r={2.2} fill={stroke} />
+          <path d="M52 30 C61 39 63 52 59 64 M22 43 L29 44" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" />
+          {/* nostril hint on the muzzle */}
+          <circle cx={25} cy={39} r={1.3} fill={stroke} />
+        </>
       );
+    }
     case 'bishop':
       return (
         <>
           {/* top bead */}
-          <circle cx={45} cy={16} r={4.5} {...p} />
-          {/* mitre */}
-          <path d="M45 20 q14 10 12 30 q-3 8 -12 10 q-9 -2 -12 -10 q-2 -20 12 -30 z" {...p} />
-          {/* slit */}
-          <path d="M45 34 l6 -7" fill="none" stroke={stroke} strokeWidth={sw + 0.6} strokeLinecap="round" />
-          {/* collar */}
-          <path d="M31 60 q14 8 28 0 l-2 12 h-24 z" {...p} />
+          <circle cx={45} cy={14} r={4} {...p} />
+          {/* mitre — symmetric teardrop */}
+          <path d="M45 18 q13 9 13 26 q0 9 -13 14 q-13 -5 -13 -14 q0 -17 13 -26 z" {...p} />
+          {/* diagonal slit */}
+          <path d="M41 34 l8 -9" fill="none" stroke={stroke} strokeWidth={sw + 0.4} strokeLinecap="round" />
+          {/* collar + body */}
+          <path d="M33 58 q12 7 24 0 l-3 14 h-18 z" {...p} />
         </>
       );
     case 'queen':
       return (
         <>
-          {/* five-point crown from a zigzag, with point beads */}
-          <circle cx={22} cy={22} r={3.5} {...p} />
-          <circle cx={33.5} cy={16} r={3.5} {...p} />
-          <circle cx={45} cy={13} r={3.5} {...p} />
-          <circle cx={56.5} cy={16} r={3.5} {...p} />
-          <circle cx={68} cy={22} r={3.5} {...p} />
+          {/* five symmetric points with beads */}
+          {[
+            [21, 24],
+            [33, 18],
+            [45, 15],
+            [57, 18],
+            [69, 24],
+          ].map(([bx, by], i) => (
+            <circle key={i} cx={bx} cy={by} r={3.4} {...p} />
+          ))}
+          {/* crown: symmetric zigzag connecting the five points down to a band */}
           <path
-            d="M22 24 l4 18 l7 -22 l5 20 l7 -22 l7 22 l5 -20 l7 22 l4 -18 l-3 26 h-51 z"
+            d="M21 26 L29 40 L33 21 L39 38 L45 18 L51 38 L57 21 L61 40 L69 26 L62 51 L28 51 Z"
             {...p}
           />
+          <path d="M29 47 H61 L60 53 H30 Z" {...p} />
           {/* flared body */}
-          <path d="M27 50 h36 q3 14 6 22 h-48 q3 -8 6 -22 z" {...p} />
+          <path d="M30 51 H60 L56 57 Q55 65 64 74 H26 Q35 65 34 57 Z" {...p} />
         </>
       );
     case 'king':
       return (
         <>
-          {/* cross finial */}
-          <path d="M42 8 h6 v6 h6 v6 h-6 v7 h-6 v-7 h-6 v-6 h6 z" {...p} />
-          {/* crown / shoulders */}
-          <path d="M30 34 q15 -8 30 0 q4 16 6 38 h-42 q2 -22 6 -38 z" {...p} />
-          {/* collar band */}
-          <path d="M30 48 q15 7 30 0" fill="none" stroke={stroke} strokeWidth={sw} />
+          {/* symmetric cross finial */}
+          <path d="M41 6 h8 v6 h6 v7 h-6 v8 h-8 v-8 h-6 v-7 h6 z" {...p} />
+          {/* crown shoulders (symmetric) */}
+          <path d="M30 30 q15 -7 30 0 l-3 14 h-24 z" {...p} />
+          {/* flared body */}
+          <path d="M29 44 h32 q3 15 7 28 h-46 q4 -13 7 -28 z" {...p} />
         </>
       );
     default:
@@ -110,7 +134,7 @@ export function ChessPiece({ type, side, size, x, y, idPrefix }: Props) {
   const grad = `${idPrefix}-g`;
   const shadow = `${idPrefix}-sh`;
   const fill = `url(#${grad})`;
-  const stroke = white ? '#5b5b62' : '#0a0a0e';
+  const stroke = white ? '#66533c' : '#bba887';
   const sw = 2;
 
   return (
@@ -122,9 +146,9 @@ export function ChessPiece({ type, side, size, x, y, idPrefix }: Props) {
         <radialGradient id={grad} cx="38%" cy="30%" r="85%">
           {white ? (
             <>
-              <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="55%" stopColor="#f0eee8" />
-              <stop offset="100%" stopColor="#cfcbc0" />
+              <stop offset="0%" stopColor="#fffdf6" />
+              <stop offset="55%" stopColor="#f3e7cb" />
+              <stop offset="100%" stopColor="#cdb98f" />
             </>
           ) : (
             <>

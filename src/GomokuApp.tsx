@@ -1,3 +1,4 @@
+import { GameActions } from './GameActions';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GomokuBoard } from './GomokuBoard';
 import { emptyBoard, GBoard, GPos, idx, otherStone, Stone } from './engine/gomoku/types';
@@ -250,14 +251,7 @@ export function GomokuApp({ onExit }: { onExit?: () => void }) {
         )}
       </div>
 
-      <div className="game-actions">
-        <button className="btn" onClick={onExit}>
-          게임 선택
-        </button>
-        <button className="btn primary" onClick={backToSetup}>
-          새 게임
-        </button>
-      </div>
+      <GameActions onExit={onExit} onNewGame={backToSetup} />
     </div>
   );
 }

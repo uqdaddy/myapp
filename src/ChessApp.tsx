@@ -1,3 +1,4 @@
+import { GameActions } from './GameActions';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChessBoard } from './ChessBoard';
 import { ChessPiece } from './ChessPiece';
@@ -17,8 +18,6 @@ import {
   ChessDifficulty,
 } from './engine/chess/chessEngine';
 import { playPlaceSound, unlockAudio } from './sound';
-import { CGameMove, toGameMove } from './engine/chess/notation';
-import { ChessRecord } from './ChessRecord';
 import { isInAppBrowser } from './inapp';
 import { InAppNotice } from './InAppNotice';
 import {
@@ -52,10 +51,6 @@ export function ChessApp({ onExit }: { onExit?: () => void }) {
   // Pending promotion: a legal pawn move set awaiting the user's piece choice.
   const [promoChoice, setPromoChoice] = useState<{ moves: CMove[] } | null>(null);
 
-  // Game record + replay start.
-  const [history, setHistory] = useState<CGameMove[]>([]);
-  const [startState, setStartState] = useState<CState>(() => initialState());
-  const [showRecord, setShowRecord] = useState(false);
 
   const status = useMemo(() => getStatus(state), [state]);
   const gameOver = status.kind !== 'playing';
@@ -86,16 +81,8 @@ export function ChessApp({ onExit }: { onExit?: () => void }) {
     return legalMovesFor(state, selected);
   }, [state, selected]);
 
-  // Refs mirror latest state so doMove needn't be recreated.
-  const stateRef = useRef(state);
-  useEffect(() => {
-    stateRef.current = state;
-  }, [state]);
-
   const doMove = useCallback((move: CMove) => {
     playPlaceSound(!!move.captured || !!move.castle);
-    const before = stateRef.current;
-    setHistory((h) => [...h, toGameMove(before.board, move, before.toMove)]);
     setState((s) => advanceState(s, move));
     setLastMove(move);
     setSelected(null);
@@ -207,13 +194,10 @@ export function ChessApp({ onExit }: { onExit?: () => void }) {
     setDifficulty(diff);
     setChessSkill(CHESS_DIFFICULTY[diff].skill).catch(() => {});
     setState(init);
-    setStartState(init);
     setSelected(null);
     setLastMove(null);
     setThinking(false);
     setPromoChoice(null);
-    setHistory([]);
-    setShowRecord(false);
     setPhase('playing');
   }, []);
 
@@ -321,9 +305,6 @@ export function ChessApp({ onExit }: { onExit?: () => void }) {
               <div className="result-title">{endResult.title}</div>
               <div className="result-detail">{endResult.detail}</div>
               <button className="btn primary result-btn" onClick={backToSetup}>새 게임</button>
-              <button className="btn result-btn" onClick={() => setShowRecord(true)} disabled={history.length === 0}>
-                기보 보기
-              </button>
             </div>
           </div>
         )}
@@ -342,19 +323,7 @@ export function ChessApp({ onExit }: { onExit?: () => void }) {
         )}
       </div>
 
-      <div className="game-actions">
-        <button className="btn" onClick={() => setShowRecord(true)} disabled={history.length === 0}>기보</button>
-        <button className="btn primary" onClick={backToSetup}>새 게임</button>
-      </div>
-
-      {showRecord && (
-        <ChessRecord
-          startState={startState}
-          history={history}
-          humanSide={humanSide}
-          onClose={() => setShowRecord(false)}
-        />
-      )}
+      <GameActions onExit={onExit} onNewGame={backToSetup} />
     </div>
   );
 }

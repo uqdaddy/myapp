@@ -247,16 +247,16 @@ function ChessPreview() {
     <svg className="gs-prev" viewBox="0 0 120 120" role="img" aria-label="체스">
       <defs>
         <linearGradient id="gsc-border" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#3a3a3e" />
-          <stop offset="100%" stopColor="#161618" />
+          <stop offset="0%" stopColor="#7a4e28" />
+          <stop offset="100%" stopColor="#3c2410" />
         </linearGradient>
         <linearGradient id="gsc-light" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#f5f5f6" />
-          <stop offset="100%" stopColor="#e3e3e6" />
+          <stop offset="0%" stopColor="#e7bd82" />
+          <stop offset="100%" stopColor="#bf8c46" />
         </linearGradient>
         <linearGradient id="gsc-dark" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#5c5c63" />
-          <stop offset="100%" stopColor="#44444a" />
+          <stop offset="0%" stopColor="#9a6534" />
+          <stop offset="100%" stopColor="#7d4f26" />
         </linearGradient>
       </defs>
       <rect x="2" y="2" width="116" height="116" rx="12" fill="url(#gsc-border)" />
@@ -272,6 +272,7 @@ function ChessPreview() {
           />
         ))
       )}
+      <rect x={OFF} y={OFF} width={108} height={108} filter="url(#gsp-grain)" opacity={0.5} />
       {glyphs.map((p, i) => (
         <ChessPiece
           key={i}

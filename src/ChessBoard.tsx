@@ -46,61 +46,52 @@ export function ChessBoard({
       aria-label="체스판"
     >
       <defs>
-        {/* charcoal frame */}
+        {/* dark walnut frame (matches Janggi/Gomoku) */}
         <linearGradient id="cWoodBorder" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#3a3a3e" />
-          <stop offset="50%" stopColor="#2a2a2d" />
-          <stop offset="100%" stopColor="#161618" />
+          <stop offset="0%" stopColor="#7a4e28" />
+          <stop offset="50%" stopColor="#5c3a1c" />
+          <stop offset="100%" stopColor="#3c2410" />
         </linearGradient>
-        {/* light + dark MARBLE squares: classic cream-ivory + green serpentine
-            marble. The green/cream contrast reads clearly against BOTH the
-            white (ivory) and black (charcoal) disc pieces. */}
-        <linearGradient id="cLight" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#f3ead2" />
-          <stop offset="100%" stopColor="#e2d3ad" />
+        {/* light + dark WOOD squares: warm maple vs walnut, with a soft
+            diagonal sheen. Distinct enough to contrast the ivory/charcoal
+            pieces. */}
+        <linearGradient id="cLight" x1="0" y1="0" x2="0.85" y2="1">
+          <stop offset="0%" stopColor="#e7bd82" />
+          <stop offset="45%" stopColor="#d8a862" />
+          <stop offset="100%" stopColor="#bf8c46" />
         </linearGradient>
         <linearGradient id="cDark" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#5f7d5a" />
-          <stop offset="100%" stopColor="#48624a" />
+          <stop offset="0%" stopColor="#9a6534" />
+          <stop offset="100%" stopColor="#7d4f26" />
         </linearGradient>
-        {/* MARBLE VEINS: wispy turbulence turned into thin translucent streaks,
-            overlaid across the whole playfield for a polished-marble look. */}
-        <filter id="cMarble" x="0" y="0" width="100%" height="100%">
-          <feTurbulence
-            type="turbulence"
-            baseFrequency="0.014 0.03"
-            numOctaves={4}
-            seed={13}
-            stitchTiles="stitch"
-            result="turb"
-          />
-          {/* sharpen the turbulence into vein-like ridges */}
-          <feColorMatrix
-            in="turb"
-            type="matrix"
-            values="0 0 0 0 0.55
-                    0 0 0 0 0.55
-                    0 0 0 0 0.58
-                    0 0 0 2.2 -0.9"
-            result="veins"
-          />
-          {/* keep only the thin bright ridges (soft) */}
-          <feComponentTransfer in="veins" result="softveins">
-            <feFuncA type="gamma" amplitude="1" exponent="2.2" offset="0" />
-          </feComponentTransfer>
-          <feComposite in="softveins" operator="over" />
+        {/* broad figure grain + fine grain for premium hardwood */}
+        <filter id="cGrain" x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.006 0.055" numOctaves={5} seed={7} stitchTiles="stitch" result="n" />
+          <feColorMatrix in="n" type="matrix"
+            values="0 0 0 0 0.40
+                    0 0 0 0 0.25
+                    0 0 0 0 0.08
+                    0 0 0 0.55 0" />
+        </filter>
+        <filter id="cGrainFine" x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.02 0.5" numOctaves={3} seed={19} stitchTiles="stitch" result="n" />
+          <feColorMatrix in="n" type="matrix"
+            values="0 0 0 0 0.3
+                    0 0 0 0 0.19
+                    0 0 0 0 0.07
+                    0 0 0 0.2 0" />
         </filter>
         <filter id="cBorderGrain" x="0" y="0" width="100%" height="100%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.8 0.8" numOctaves={2} seed={4} stitchTiles="stitch" result="n" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.02 0.16" numOctaves={3} seed={4} stitchTiles="stitch" result="n" />
           <feColorMatrix in="n" type="matrix"
-            values="0 0 0 0 0.06
-                    0 0 0 0 0.06
-                    0 0 0 0 0.07
-                    0 0 0 0.5 0" />
+            values="0 0 0 0 0.14
+                    0 0 0 0 0.08
+                    0 0 0 0 0.03
+                    0 0 0 0.55 0" />
         </filter>
         <radialGradient id="cVignette" cx="50%" cy="46%" r="72%">
           <stop offset="60%" stopColor="rgba(0,0,0,0)" />
-          <stop offset="100%" stopColor="rgba(20,20,24,0.16)" />
+          <stop offset="100%" stopColor="rgba(60,34,8,0.26)" />
         </radialGradient>
 
         <filter id="cBoardShadow" x="-15%" y="-15%" width="130%" height="130%">
@@ -148,11 +139,9 @@ export function ChessBoard({
           );
         })
       )}
-      {/* marble veining across the whole playfield (light veins read on the
-          dark squares; a second darker pass reads on the light squares) */}
-      <rect x={LABEL} y={LABEL} width={BOARD} height={BOARD} filter="url(#cMarble)" opacity={0.5} style={{ mixBlendMode: 'screen' }} />
-      <rect x={LABEL} y={LABEL} width={BOARD} height={BOARD} filter="url(#cMarble)" opacity={0.32} style={{ mixBlendMode: 'multiply' }} />
-      {/* polished vignette over the squares */}
+      {/* wood grain across the whole playfield + vignette */}
+      <rect x={LABEL} y={LABEL} width={BOARD} height={BOARD} filter="url(#cGrain)" opacity={0.5} />
+      <rect x={LABEL} y={LABEL} width={BOARD} height={BOARD} filter="url(#cGrainFine)" opacity={0.35} />
       <rect x={LABEL} y={LABEL} width={BOARD} height={BOARD} fill="url(#cVignette)" />
 
       {/* last-move highlight */}
