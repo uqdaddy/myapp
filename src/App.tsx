@@ -229,6 +229,7 @@ export default function App({ onExit }: { onExit?: () => void } = {}) {
   }, [toMove, aiSide, gameOver, phase, engineState]);
 
   const startGame = useCallback((cfg: StartConfig) => {
+    unlockAudio(); // gesture: prime audio so the AI's first clack isn't dropped
     if (aiTimer.current) window.clearTimeout(aiTimer.current);
     const human = cfg.humanSide;
     const humanSetup: SideSetup = cfg.humanSetup;

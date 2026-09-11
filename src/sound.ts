@@ -26,11 +26,28 @@ export function unlockAudio(): void {
 // A short percussive wood "clack": a burst of noise shaped by a band-pass
 // filter and an extremely fast decay envelope. `capture` makes it a touch
 // deeper/louder for taking a piece.
+//
+// Robustness: the AudioContext can be `suspended` (mobile, or after a tab
+// regains focus). resume() is asynchronous, so a sound scheduled while the
+// context is still suspended is silently dropped — this was the cause of the
+// intermittent "sometimes no clack" in Janggi (esp. on AI moves). We resume
+// and, if the context isn't running yet, retry once after resume resolves.
 export function playPlaceSound(capture = false): void {
   const c = getCtx();
   if (!c) return;
-  if (c.state === 'suspended') void c.resume();
+  if (c.state === 'running') {
+    emitClack(c, capture);
+    return;
+  }
+  // Suspended: resume() is async, so emit only once it's actually running,
+  // otherwise the sound is dropped. This fixes the intermittent Janggi clack.
+  void c
+    .resume()
+    .then(() => emitClack(c, capture))
+    .catch(() => {});
+}
 
+function emitClack(c: AudioContext, capture: boolean): void {
   const now = c.currentTime;
   const dur = 0.055; // very short = "click/clack", not a tone
 

@@ -5,6 +5,7 @@ import { gomokuStatus } from './engine/gomoku/game';
 import { findWinningLine } from './engine/gomoku/rules';
 import { chooseGomokuMove, GDifficulty, G_DIFFICULTY } from './engine/gomoku/ai';
 import type { GAiRequest, GAiResponse } from './engine/gomoku/aiWorker';
+import { playPlaceSound, unlockAudio } from './sound';
 
 type Phase = 'setup' | 'playing';
 
@@ -45,6 +46,7 @@ export function GomokuApp({ onExit }: { onExit?: () => void }) {
   }, []);
 
   const place = useCallback((r: number, c: number, color: Stone) => {
+    playPlaceSound(); // wooden "clack" on every stone (human & AI)
     setBoard((b) => {
       if (b[idx(r, c)] !== null) return b;
       const nb = b.slice();
@@ -57,6 +59,7 @@ export function GomokuApp({ onExit }: { onExit?: () => void }) {
 
   const onCellTap = useCallback(
     (r: number, c: number) => {
+      unlockAudio(); // allow audio after the first user gesture (mobile)
       if (gameOver || thinking) return;
       if (toMove !== humanColor) return;
       if (board[idx(r, c)] !== null) return;
@@ -123,6 +126,7 @@ export function GomokuApp({ onExit }: { onExit?: () => void }) {
   }, [toMove, aiColor, gameOver, phase]);
 
   const start = useCallback((color: Stone, diff: GDifficulty) => {
+    unlockAudio(); // gesture: prime audio so the AI's first clack isn't dropped
     if (aiTimer.current) window.clearTimeout(aiTimer.current);
     setHumanColor(color);
     setDifficulty(diff);
