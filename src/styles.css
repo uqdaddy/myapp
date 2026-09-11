@@ -848,8 +848,25 @@ body {
 }
 .gs-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 14px;
+}
+/* stacked cards get a horizontal layout: preview left, text right */
+.gs-grid .gs-card {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  padding: 14px 16px;
+}
+.gs-grid .gs-prev-wrap {
+  width: 84px;
+  flex-shrink: 0;
+}
+.gs-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 .gs-card {
   display: flex;
@@ -1003,4 +1020,103 @@ body {
 .gresult-detail {
   font-size: 13px;
   opacity: 0.9;
+}
+
+/* ---- Chess board ---- */
+.cboard {
+  width: 100%;
+  height: auto;
+  display: block;
+  touch-action: manipulation;
+}
+.clabel text {
+  fill: #e8cfa0;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+/* piece glyphs: two-tone set (fill + outline) with a drop shadow */
+.cpiece {
+  font-size: 34px;
+  paint-order: stroke fill;
+}
+.cpiece-w {
+  fill: #f7f3ea;
+  stroke: #2a2320;
+  stroke-width: 1.4px;
+}
+.cpiece-b {
+  fill: #2b2b2b;
+  stroke: #efe6d5;
+  stroke-width: 1.1px;
+}
+/* highlights (square overlays) */
+.clast {
+  fill: rgba(255, 214, 120, 0.38);
+}
+.csel {
+  fill: rgba(120, 200, 120, 0.4);
+}
+.ccheck {
+  fill: rgba(255, 59, 48, 0.45);
+  animation: checkPulse 0.9s ease-in-out infinite;
+}
+.ctarget-dot {
+  fill: rgba(20, 90, 40, 0.55);
+}
+.ctarget-capture {
+  fill: none;
+  stroke: rgba(200, 40, 40, 0.75);
+  stroke-width: 3.5;
+}
+
+/* promotion picker */
+.promo-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+.promo-btn {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #c9a25f;
+  border-radius: 12px;
+  background: #efdcb4;
+}
+.cpiece-glyph {
+  font-size: 34px;
+  line-height: 1;
+  paint-order: stroke fill;
+}
+.cpiece-glyph.cpiece-w {
+  color: #f7f3ea;
+  -webkit-text-stroke: 1.4px #2a2320;
+}
+.cpiece-glyph.cpiece-b {
+  color: #2b2b2b;
+  -webkit-text-stroke: 1.1px #efe6d5;
+}
+
+/* draw result card */
+.result-card.draw .result-title {
+  color: #7a5a30;
+}
+
+/* chess glyphs in the game-select preview */
+.gs-cpiece {
+  font-size: 18px;
+  paint-order: stroke fill;
+}
+.gs-cpiece.cpiece-w {
+  fill: #f7f3ea;
+  stroke: #2a2320;
+  stroke-width: 1px;
+}
+.gs-cpiece.cpiece-b {
+  fill: #2b2b2b;
+  stroke: #efe6d5;
+  stroke-width: 0.8px;
 }

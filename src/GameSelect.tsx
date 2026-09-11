@@ -1,5 +1,5 @@
-// Landing screen: choose which game to play (Janggi or Gomoku).
-export type GameKind = 'janggi' | 'gomoku';
+// Landing screen: choose which game to play (Janggi, Chess, or Gomoku).
+export type GameKind = 'janggi' | 'chess' | 'gomoku';
 
 interface Props {
   onSelect: (game: GameKind) => void;
@@ -227,6 +227,62 @@ function GomokuPreview() {
   );
 }
 
+// Chess preview: a small checkered board (matching ChessBoard's wood + square
+// palette) with a few two-tone glyph pieces.
+function ChessPreview() {
+  const CELL = 27; // 4x4 mini board inside the 120 canvas with a 6px inset
+  const OFF = 6;
+  const glyphs: { r: number; c: number; g: string; white: boolean }[] = [
+    { r: 0, c: 1, g: '\u265C', white: false }, // black rook
+    { r: 1, c: 2, g: '\u265E', white: false }, // black knight
+    { r: 2, c: 1, g: '\u265F', white: true }, // white pawn
+    { r: 3, c: 2, g: '\u265B', white: true }, // white queen
+  ];
+  return (
+    <svg className="gs-prev" viewBox="0 0 120 120" role="img" aria-label="체스">
+      <defs>
+        <linearGradient id="gsc-border" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#6b4a2a" />
+          <stop offset="100%" stopColor="#33210f" />
+        </linearGradient>
+        <linearGradient id="gsc-light" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#f3dcb6" />
+          <stop offset="100%" stopColor="#e6c393" />
+        </linearGradient>
+        <linearGradient id="gsc-dark" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#b07a46" />
+          <stop offset="100%" stopColor="#95612f" />
+        </linearGradient>
+      </defs>
+      <rect x="2" y="2" width="116" height="116" rx="12" fill="url(#gsc-border)" />
+      {Array.from({ length: 4 }, (_, r) =>
+        Array.from({ length: 4 }, (_, c) => (
+          <rect
+            key={`${r}-${c}`}
+            x={OFF + c * CELL}
+            y={OFF + r * CELL}
+            width={CELL}
+            height={CELL}
+            fill={(r + c) % 2 === 1 ? 'url(#gsc-dark)' : 'url(#gsc-light)'}
+          />
+        ))
+      )}
+      {glyphs.map((p, i) => (
+        <text
+          key={i}
+          x={OFF + p.c * CELL + CELL / 2}
+          y={OFF + p.r * CELL + CELL / 2 + 1}
+          className={`gs-cpiece ${p.white ? 'cpiece-w' : 'cpiece-b'}`}
+          textAnchor="middle"
+          dominantBaseline="central"
+        >
+          {p.g}
+        </text>
+      ))}
+    </svg>
+  );
+}
+
 export function GameSelect({ onSelect }: Props) {
   return (
     <div className="gameselect">
@@ -240,16 +296,30 @@ export function GameSelect({ onSelect }: Props) {
           <span className="gs-prev-wrap">
             <JanggiPreview />
           </span>
-          <span className="gs-name">장기</span>
-          <span className="gs-tag">한국식 장기 · AI 대국</span>
+          <span className="gs-card-text">
+            <span className="gs-name">장기</span>
+            <span className="gs-tag">한국식 장기 · AI 대국</span>
+          </span>
+        </button>
+
+        <button className="gs-card" onClick={() => onSelect('chess')}>
+          <span className="gs-prev-wrap">
+            <ChessPreview />
+          </span>
+          <span className="gs-card-text">
+            <span className="gs-name">체스</span>
+            <span className="gs-tag">국제 체스 · AI 대국</span>
+          </span>
         </button>
 
         <button className="gs-card" onClick={() => onSelect('gomoku')}>
           <span className="gs-prev-wrap">
             <GomokuPreview />
           </span>
-          <span className="gs-name">오목</span>
-          <span className="gs-tag">15×15 자유형 · AI 대국</span>
+          <span className="gs-card-text">
+            <span className="gs-name">오목</span>
+            <span className="gs-tag">15×15 자유형 · AI 대국</span>
+          </span>
         </button>
       </div>
     </div>

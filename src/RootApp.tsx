@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { GameSelect, GameKind } from './GameSelect';
 import JanggiApp from './App';
 import { GomokuApp } from './GomokuApp';
+import { ChessApp } from './ChessApp';
 import { isInAppBrowser } from './inapp';
 import { InAppNotice } from './InAppNotice';
 
@@ -13,6 +14,7 @@ export default function RootApp() {
   if (isInAppBrowser()) return <InAppNotice />;
 
   if (game === 'janggi') return <JanggiApp onExit={() => setGame(null)} />;
+  if (game === 'chess') return <ChessApp onExit={() => setGame(null)} />;
   if (game === 'gomoku') return <GomokuApp onExit={() => setGame(null)} />;
 
   return <GameSelect onSelect={setGame} />;
