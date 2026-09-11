@@ -230,15 +230,6 @@ export function GomokuApp({ onExit }: { onExit?: () => void }) {
     <div className="app">
       <div className="status-bar">{thinking ? 'AI가 생각하는 중…' : statusText}</div>
 
-      {/* Compact result banner ABOVE the board so the highlighted winning
-          line stays fully visible (no full-board popup). */}
-      {endResult && (
-        <div className={`gresult ${endResult.win ? 'win' : 'lose'}`}>
-          <span className="gresult-title">{endResult.title}</span>
-          <span className="gresult-detail">{endResult.detail}</span>
-        </div>
-      )}
-
       <div className="board-wrap">
         <GomokuBoard
           board={board}
@@ -247,6 +238,16 @@ export function GomokuApp({ onExit }: { onExit?: () => void }) {
           disabled={gameOver || thinking || toMove !== humanColor}
           winningLine={winningLine}
         />
+
+        {/* Result banner FLOATS over the board (absolute) — like the Janggi
+            check banner — so it never pushes the board down. The winning line
+            stays visible underneath. */}
+        {endResult && (
+          <div className={`gresult-banner ${endResult.win ? 'win' : 'lose'}`}>
+            <span className="gresult-title">{endResult.title}</span>
+            <span className="gresult-detail">{endResult.detail}</span>
+          </div>
+        )}
       </div>
 
       <div className="game-actions">
