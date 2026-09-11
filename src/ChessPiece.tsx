@@ -14,9 +14,9 @@ interface Props {
 export function ChessPiece({ type, side, size, x, y }: Props) {
   const white = side === 'white';
   const fill = white ? '#d8e5ec' : '#60615f';
-  const stroke = white ? '#98afbb' : '#414340';
+  const stroke = white ? '#536d7b' : '#272b28';
   const shine = white ? '#ffffff' : '#898b88';
-  const shape = { fill, stroke: white ? stroke : fill, strokeWidth: 3.2, strokeLinejoin: 'round' as const, strokeLinecap: 'round' as const };
+  const shape = { fill, stroke, strokeWidth: 4.2, strokeLinejoin: 'round' as const, strokeLinecap: 'round' as const };
   const line = { fill: 'none', stroke, strokeWidth: 3.5, strokeLinecap: 'round' as const };
 
   return (
@@ -50,7 +50,7 @@ export function ChessPiece({ type, side, size, x, y }: Props) {
       </>}
       {type === 'queen' && <>
         <ellipse cx={45} cy={71} rx={18} ry={12} fill={stroke} />
-        <path d="M28 32 L23 32 L23 19 Q23 15 28 18 L36 22 L45 12 L54 22 L62 18 Q67 15 67 19 L67 32 L62 32 Z" fill={white ? shine : stroke} stroke={white ? stroke : '#414340'} strokeWidth={3.2} strokeLinejoin="round" />
+        <path d="M28 32 L23 32 L23 19 Q23 15 28 18 L36 22 L45 12 L54 22 L62 18 Q67 15 67 19 L67 32 L62 32 Z" fill={white ? shine : stroke} stroke={stroke} strokeWidth={4.2} strokeLinejoin="round" />
         <path d="M9 32 Q27 28 45 33 Q63 28 81 32 C67 44 62 55 62 69 C62 83 28 83 28 69 C28 55 23 44 9 32 Z" {...shape} />
         <path d="M24 36 Q45 22 66 36 L56 44 L45 36 L34 44 Z" fill={shine} />
         <path d="M40 64 L45 61 L50 64 L50 71 L45 74 L40 71 Z" fill={shine} />
@@ -60,7 +60,7 @@ export function ChessPiece({ type, side, size, x, y }: Props) {
         <path d="M45 27 C27 19 11 27 10 41 C8 55 23 61 30 73 Q45 87 60 73 C67 61 82 55 80 41 C79 27 63 19 45 27 Z" {...shape} />
         <path d="M32 66 Q37 61 45 68 Q53 61 58 66" fill="none" stroke={shine} strokeWidth={11} strokeLinecap="round" />
         <rect x={30} y={28} width={30} height={15} rx={5} fill={shine} />
-        <path d="M41 11 H49 V18 H56 V26 H49 V33 H41 V26 H34 V18 H41 Z" fill={white ? shine : stroke} stroke={stroke} strokeWidth={3.2} strokeLinejoin="round" />
+        <path d="M41 11 H49 V18 H56 V26 H49 V33 H41 V26 H34 V18 H41 Z" fill={white ? shine : stroke} stroke={stroke} strokeWidth={4.2} strokeLinejoin="round" />
       </>}
     </g>
   );
