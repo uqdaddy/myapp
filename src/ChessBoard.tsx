@@ -52,15 +52,16 @@ export function ChessBoard({
           <stop offset="50%" stopColor="#2a2a2d" />
           <stop offset="100%" stopColor="#161618" />
         </linearGradient>
-        {/* light + dark MARBLE squares: cream/white vs charcoal, with a soft
-            polished sheen from the diagonal gradient */}
+        {/* light + dark MARBLE squares: classic cream-ivory + green serpentine
+            marble. The green/cream contrast reads clearly against BOTH the
+            white (ivory) and black (charcoal) disc pieces. */}
         <linearGradient id="cLight" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#fbfaf7" />
-          <stop offset="100%" stopColor="#e7e4dc" />
+          <stop offset="0%" stopColor="#f3ead2" />
+          <stop offset="100%" stopColor="#e2d3ad" />
         </linearGradient>
         <linearGradient id="cDark" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#4c4c53" />
-          <stop offset="100%" stopColor="#34343a" />
+          <stop offset="0%" stopColor="#5f7d5a" />
+          <stop offset="100%" stopColor="#48624a" />
         </linearGradient>
         {/* MARBLE VEINS: wispy turbulence turned into thin translucent streaks,
             overlaid across the whole playfield for a polished-marble look. */}
