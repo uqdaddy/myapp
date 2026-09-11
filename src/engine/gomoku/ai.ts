@@ -15,7 +15,7 @@ export const G_DIFFICULTY: Record<
   // depth = search plies; candidates = max moves examined per node
   easy: { depth: 2, candidates: 8, label: '쉬움' },
   normal: { depth: 4, candidates: 12, label: '보통' },
-  hard: { depth: 6, candidates: 10, label: '어려움' },
+  hard: { depth: 6, candidates: 16, label: '어려움' },
 };
 
 // Candidate moves: empty cells within `radius` of any existing stone. This
@@ -156,7 +156,7 @@ function negamax(
   if (winning) {
     // Winning now is best; prefer sooner wins via depth bonus.
     const score = SCORE.FIVE + depth;
-    return toMove === root ? score : -score;
+    return score;
   }
 
   if (depth === 0) {
@@ -169,8 +169,12 @@ function negamax(
   let best = -Infinity;
   for (const { r, c } of ordered) {
     b[idx(r, c)] = toMove;
-    const score = -negamax(b, otherStone(toMove), root, depth - 1, -beta, -alpha, limit, timer);
-    b[idx(r, c)] = null;
+    let score: number;
+    try {
+      score = -negamax(b, otherStone(toMove), root, depth - 1, -beta, -alpha, limit, timer);
+    } finally {
+      b[idx(r, c)] = null;
+    }
     if (score > best) best = score;
     if (best > alpha) alpha = best;
     if (alpha >= beta) break; // prune
@@ -186,11 +190,12 @@ export interface GSearchResult {
 // Choose the AI's move. Explicit win/block first, then time-limited iterative
 // deepening negamax.
 export function chooseGomokuMove(
-  b: GBoard,
+  input: GBoard,
   me: Stone,
   difficulty: GDifficulty,
   timeMs = 1500
 ): GSearchResult {
+  const b = input.slice();
   const cfg = G_DIFFICULTY[difficulty];
   const cells = candidateCells(b);
   if (cells.length === 0) return { move: null, score: 0 };
@@ -223,7 +228,7 @@ export function chooseGomokuMove(
   //     (a loss). This is exactly the case the user hit: the AI must block the
   //     open three rather than extend its own weaker shape. Blocking one end is
   //     enough (it leaves only a simple, answerable four).
-  if (oppHasThreat(b, cells, opp, SCORE.OPEN_THREE)) {
+  if (difficulty !== 'easy' && oppHasThreat(b, cells, opp, SCORE.OPEN_THREE)) {
     // Prefer creating our own forcing four (opponent must answer us instead).
     const myFour = findThreatMove(b, cells, me, SCORE.FOUR);
     if (myFour) return { move: myFour, score: SCORE.FOUR };
@@ -239,7 +244,7 @@ export function chooseGomokuMove(
   const timer = new Timer(timeMs);
   const ordered = orderCandidates(b, cells, me, cfg.candidates);
   let bestMove: GPos = ordered[0];
-  let bestScore = -Infinity;
+  let bestScore = 0;
 
   try {
     for (let depth = 2; depth <= cfg.depth; depth++) {
@@ -249,7 +254,9 @@ export function chooseGomokuMove(
       const beta = Infinity;
       for (const { r, c } of ordered) {
         b[idx(r, c)] = me;
-        const score = -negamax(
+        let score: number;
+        try {
+          score = -negamax(
           b,
           opp,
           me,
@@ -259,7 +266,9 @@ export function chooseGomokuMove(
           cfg.candidates,
           timer
         );
-        b[idx(r, c)] = null;
+        } finally {
+          b[idx(r, c)] = null;
+        }
         if (score > localBest) {
           localBest = score;
           localMove = { r, c };

@@ -1,4 +1,5 @@
 import { GameActions } from './GameActions';
+import { MoveLegend } from './MoveLegend';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChessBoard } from './ChessBoard';
 import { ChessCapturedTray } from './ChessCapturedTray';
@@ -330,6 +331,7 @@ export function ChessApp({ onExit }: { onExit?: () => void }) {
       </div>
 
       <ChessCapturedTray owner={humanSide} captured={captured} board={state.board} label={`나 (${SIDE_NAME[humanSide]})`} />
+      <MoveLegend />
       <GameActions onExit={onExit} onNewGame={backToSetup} />
     </div>
   );
@@ -358,6 +360,7 @@ function ChessSetup({
       )}
       <h1 className="setup-title">체스</h1>
       <p className="setup-sub">AI와 대전 · 시작 전에 설정을 골라주세요</p>
+      <p className="rule-note">캐슬링·앙파상·승격 지원 · 50수 자동 무승부 · 반복 무승부는 미적용</p>
 
       <div className="setup-card">
         <h2>기물 색</h2>

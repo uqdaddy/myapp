@@ -1,4 +1,5 @@
 import { GameActions } from './GameActions';
+import { MoveLegend } from './MoveLegend';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GomokuBoard } from './GomokuBoard';
 import { emptyBoard, GBoard, GPos, idx, otherStone, Stone } from './engine/gomoku/types';
@@ -94,6 +95,7 @@ export function GomokuApp({ onExit }: { onExit?: () => void }) {
     const budget = THINK_MS[difficulty];
     if (worker) {
       const onMsg = (e: MessageEvent<GAiResponse>) => {
+        window.clearTimeout(watchdog);
         worker.removeEventListener('message', onMsg);
         apply(e.data.result.move);
       };
@@ -101,7 +103,7 @@ export function GomokuApp({ onExit }: { onExit?: () => void }) {
       // guard against a hung worker
       const watchdog = window.setTimeout(() => {
         worker.removeEventListener('message', onMsg);
-        const res = chooseGomokuMove(board, aiColor, difficulty, budget);
+        const res = chooseGomokuMove(board, aiColor, 'easy', 120);
         apply(res.move);
       }, budget + 6000);
       const req: GAiRequest = { board, me: aiColor, difficulty, timeMs: budget };
@@ -116,7 +118,7 @@ export function GomokuApp({ onExit }: { onExit?: () => void }) {
 
     // Fallback: compute on the main thread.
     aiTimer.current = window.setTimeout(() => {
-      const res = chooseGomokuMove(board, aiColor, difficulty, budget);
+      const res = chooseGomokuMove(board, aiColor, 'easy', 120);
       apply(res.move);
     }, 30);
     return () => {
@@ -180,6 +182,7 @@ export function GomokuApp({ onExit }: { onExit?: () => void }) {
         )}
         <h1 className="setup-title">오목</h1>
         <p className="setup-sub">AI와 대전 · 시작 전에 설정을 골라주세요</p>
+        <p className="rule-note">자유룰 · 금수 없음 · 흑 선공 · 5개 이상 연속이면 승리</p>
 
         <div className="setup-card">
           <h2>돌 색 (흑이 먼저)</h2>
@@ -251,6 +254,7 @@ export function GomokuApp({ onExit }: { onExit?: () => void }) {
         )}
       </div>
 
+      <MoveLegend placement />
       <GameActions onExit={onExit} onNewGame={backToSetup} />
     </div>
   );

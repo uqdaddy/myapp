@@ -1,4 +1,5 @@
 import { GameActions } from './GameActions';
+import { MoveLegend } from './MoveLegend';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Board } from './Board';
 import { CapturedTray } from './CapturedTray';
@@ -375,6 +376,7 @@ export default function App({ onExit }: { onExit?: () => void } = {}) {
         label={`나 (${SIDE_NAME[humanSide]})`}
       />
 
+      <MoveLegend />
       <GameActions onExit={onExit} onNewGame={backToSetup} />
     </div>
   );

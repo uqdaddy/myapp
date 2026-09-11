@@ -44,6 +44,7 @@ export function SetupScreen({ onStart, onBack }: Props) {
       )}
       <h1 className="setup-title">장기</h1>
       <p className="setup-sub">AI와 대전 · 시작 전에 설정을 골라주세요</p>
+      <p className="rule-note">앱 간소화 규칙 · 빅장 대면 수 금지 · 한 수 쉼 없음 · 둘 수 없으면 패배</p>
 
       <div className="stepper">
         {['진영', '마·상 배치', '난이도'].map((label, i) => (

@@ -253,8 +253,8 @@ export function Board({
       {/* last move highlight */}
       {lastMove && (
         <>
-          <circle cx={sx(lastMove.from.c)} cy={sy(lastMove.from.r)} r={17} className="last-from" />
-          <circle cx={sx(lastMove.to.c)} cy={sy(lastMove.to.r)} r={17} className="last-to" />
+          <circle cx={sx(lastMove.from.c)} cy={sy(lastMove.from.r)} r={22} className="last-from" />
+          <circle cx={sx(lastMove.to.c)} cy={sy(lastMove.to.r)} r={22} className="last-to" />
         </>
       )}
 

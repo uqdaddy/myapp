@@ -8,6 +8,36 @@
   --panel: #3a322d;
   --text: #f3ecd8;
 }
+.rule-note {
+  margin: 0;
+  color: #baa98e;
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: center;
+}
+.move-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; color: #baad98; font-size: 11px; }
+.move-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.move-legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; }
+.legend-from { border: 2px dashed #8ed7ee; }
+.legend-to { border: 2px solid #8ed7ee; }
+.legend-selected { background: #ffc85a; }
+.legend-target { background: #3cab94; border-radius: 50% !important; }
+.tray-pieces {
+  max-height: 62px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+button { touch-action: manipulation; }
+.game-actions .btn, .back-link { min-height: 44px; }
+@media (max-width: 380px), (max-height: 720px) {
+  .app { gap: 7px; padding-left: 6px; padding-right: 6px; }
+  .app .tray { margin: 0 6px; padding: 6px 8px; gap: 3px; }
+  .app .game-actions { padding: 4px 6px calc(env(safe-area-inset-bottom) + 6px); }
+  .app .status-bar { padding-top: 8px; padding-bottom: 4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; }
+}
 
 * {
   box-sizing: border-box;
@@ -199,7 +229,7 @@ body {
 }
 
 .target-dot {
-  fill: rgba(20, 90, 40, 0.55);
+  fill: rgba(20, 110, 90, 0.7);
 }
 .target-capture {
   fill: none;
@@ -208,10 +238,17 @@ body {
 }
 
 .last-from {
-  fill: rgba(255, 210, 120, 0.25);
+  fill: none;
+  stroke: #164d64;
+  stroke-width: 2.5;
+  stroke-dasharray: 4 3;
+  pointer-events: none;
 }
 .last-to {
-  fill: rgba(255, 210, 120, 0.4);
+  fill: none;
+  stroke: #164d64;
+  stroke-width: 3;
+  pointer-events: none;
 }
 
 .side-hint {
@@ -877,10 +914,10 @@ body {
   stroke-width: 2;
 }
 .glast.on-black {
-  stroke: #ff5b5b;
+  stroke: #8ed7ee;
 }
 .glast.on-white {
-  stroke: #d02020;
+  stroke: #164d64;
 }
 /* winning five-in-a-row highlight */
 .gwin-ring {
@@ -967,7 +1004,7 @@ body {
   animation: checkPulse 0.9s ease-in-out infinite;
 }
 .ctarget-dot {
-  fill: rgba(40, 90, 160, 0.6);
+  fill: rgba(20, 110, 90, 0.7);
 }
 .ctarget-capture {
   fill: none;

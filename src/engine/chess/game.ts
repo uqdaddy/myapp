@@ -10,15 +10,16 @@ export type CGameStatus =
 // Insufficient material: K vs K, K+B vs K, K+N vs K (and K+B vs K+B same color
 // — we keep it simple and cover the common lone-minor cases).
 function insufficientMaterial(board: CBoard): boolean {
-  const pieces: { side: CSide; type: string }[] = [];
+  const pieces: { side: CSide; type: string; color: number }[] = [];
   for (let r = 0; r < C_ROWS; r++) {
     for (let c = 0; c < C_COLS; c++) {
       const p = board[r][c];
-      if (p) pieces.push({ side: p.side, type: p.type });
+      if (p) pieces.push({ side: p.side, type: p.type, color: (r + c) % 2 });
     }
   }
   const nonKing = pieces.filter((p) => p.type !== 'king');
   if (nonKing.length === 0) return true; // K vs K
+  if (nonKing.every(p => p.type === 'bishop') && nonKing.every(p => p.color === nonKing[0].color)) return true;
   if (nonKing.length === 1 && (nonKing[0].type === 'bishop' || nonKing[0].type === 'knight')) {
     return true; // K+minor vs K
   }
