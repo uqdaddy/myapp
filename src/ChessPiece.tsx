@@ -1,13 +1,12 @@
 import { CPieceType, CSide } from './engine/chess/types';
 
-// Chess pieces rendered as uniform round discs (like Janggi stones) with a
-// large, clear chess symbol inside. The DISC COLOR shows the side (white =
-// ivory disc, black = charcoal disc); the SYMBOL shows the piece type. The
-// symbol scales per piece (pawn smallest, queen/king largest) so ranks are
-// distinguishable at a glance. The disc lies flat with a soft drop shadow
-// directly beneath it (no upright "standing" shadow).
+// Staunton-style chess pieces drawn as clean vector silhouettes (no disc).
+// The Staunton SHAPE is standard/uncopyrightable; these paths are our own,
+// authored to be symmetric and clearly distinct per rank. White = ivory fill
+// with a dark outline; black = charcoal fill with a light outline. Each piece
+// stands on a base with a soft contact shadow.
 //
-// Drawn in a 0..100 box; the disc is centered at (50,50).
+// Coordinate space: 0..90 wide, 0..90 tall, centered on x=45, base near y=82.
 
 interface Props {
   type: CPieceType;
@@ -18,121 +17,132 @@ interface Props {
   idPrefix: string; // unique gradient id namespace (avoid clashes)
 }
 
-const GLYPH: Record<CPieceType, string> = {
-  king: '\u265A',
-  queen: '\u265B',
-  rook: '\u265C',
-  bishop: '\u265D',
-  knight: '\u265E',
-  pawn: '\u265F',
-};
+// A shared base (foot) so every piece sits consistently on the square.
+function Base({ fill, stroke, sw }: { fill: string; stroke: string; sw: number }) {
+  return (
+    <path
+      d="M22 82 q-2 -7 7 -8 h32 q9 1 7 8 z"
+      fill={fill}
+      stroke={stroke}
+      strokeWidth={sw}
+      strokeLinejoin="round"
+    />
+  );
+}
 
-// Symbol size relative to the disc face, by rank. Bigger = more important.
-const GLYPH_SCALE: Record<CPieceType, number> = {
-  king: 2.0,
-  queen: 2.0,
-  rook: 1.7,
-  bishop: 1.75,
-  knight: 1.75,
-  pawn: 1.35,
-};
+// Body (everything above the base, ~ y 8..74) per piece.
+function Body({ type, fill, stroke, sw }: { type: CPieceType; fill: string; stroke: string; sw: number }) {
+  const p = { fill, stroke, strokeWidth: sw, strokeLinejoin: 'round' as const, strokeLinecap: 'round' as const };
+  switch (type) {
+    case 'pawn':
+      return (
+        <>
+          <circle cx={45} cy={30} r={11} {...p} />
+          <path d="M34 46 q11 7 22 0 q3 16 6 28 h-34 q3 -12 6 -28 z" {...p} />
+        </>
+      );
+    case 'rook':
+      return (
+        <>
+          {/* crenellated top */}
+          <path d="M27 20 h7 v6 h6 v-6 h8 v6 h6 v-6 h7 v14 h-40 z" {...p} />
+          {/* neck + flared body */}
+          <path d="M31 34 h28 l-3 10 q6 6 6 30 h-34 q0 -24 6 -30 z" {...p} />
+        </>
+      );
+    case 'knight':
+      // Horse head facing left — one clean silhouette.
+      return (
+        <path
+          d="M55 74 q3 -8 3 -18 q0 -18 -12 -26 q3 -3 3 -8 q-9 1 -15 9 q-5 6 -8 15 q-3 3 -5 9 q3 2 7 0 q-2 5 -6 8 q3 4 9 4 q-3 6 -3 12 q0 6 2 10 z"
+          {...p}
+        />
+      );
+    case 'bishop':
+      return (
+        <>
+          {/* top bead */}
+          <circle cx={45} cy={16} r={4.5} {...p} />
+          {/* mitre */}
+          <path d="M45 20 q14 10 12 30 q-3 8 -12 10 q-9 -2 -12 -10 q-2 -20 12 -30 z" {...p} />
+          {/* slit */}
+          <path d="M45 34 l6 -7" fill="none" stroke={stroke} strokeWidth={sw + 0.6} strokeLinecap="round" />
+          {/* collar */}
+          <path d="M31 60 q14 8 28 0 l-2 12 h-24 z" {...p} />
+        </>
+      );
+    case 'queen':
+      return (
+        <>
+          {/* five-point crown from a zigzag, with point beads */}
+          <circle cx={22} cy={22} r={3.5} {...p} />
+          <circle cx={33.5} cy={16} r={3.5} {...p} />
+          <circle cx={45} cy={13} r={3.5} {...p} />
+          <circle cx={56.5} cy={16} r={3.5} {...p} />
+          <circle cx={68} cy={22} r={3.5} {...p} />
+          <path
+            d="M22 24 l4 18 l7 -22 l5 20 l7 -22 l7 22 l5 -20 l7 22 l4 -18 l-3 26 h-51 z"
+            {...p}
+          />
+          {/* flared body */}
+          <path d="M27 50 h36 q3 14 6 22 h-48 q3 -8 6 -22 z" {...p} />
+        </>
+      );
+    case 'king':
+      return (
+        <>
+          {/* cross finial */}
+          <path d="M42 8 h6 v6 h6 v6 h-6 v7 h-6 v-7 h-6 v-6 h6 z" {...p} />
+          {/* crown / shoulders */}
+          <path d="M30 34 q15 -8 30 0 q4 16 6 38 h-42 q2 -22 6 -38 z" {...p} />
+          {/* collar band */}
+          <path d="M30 48 q15 7 30 0" fill="none" stroke={stroke} strokeWidth={sw} />
+        </>
+      );
+    default:
+      return null;
+  }
+}
 
 export function ChessPiece({ type, side, size, x, y, idPrefix }: Props) {
-  const s = size / 100;
+  const s = size / 90;
   const white = side === 'white';
-  const faceGrad = `${idPrefix}-face`;
-  const rimGrad = `${idPrefix}-rim`;
+  const grad = `${idPrefix}-g`;
   const shadow = `${idPrefix}-sh`;
-
-  // Disc geometry (flat, centered).
-  const cx = 50;
-  const cy = 50;
-  const rim = 42;
-  const face = 37;
+  const fill = `url(#${grad})`;
+  const stroke = white ? '#5b5b62' : '#0a0a0e';
+  const sw = 2;
 
   return (
     <g transform={`translate(${x} ${y}) scale(${s})`}>
       <defs>
-        {/* soft round drop shadow directly beneath the flat disc */}
-        <filter id={shadow} x="-40%" y="-40%" width="180%" height="180%">
-          <feDropShadow dx="0" dy="1.5" stdDeviation="2.2" floodColor="#000" floodOpacity="0.42" />
+        <filter id={shadow} x="-40%" y="-30%" width="180%" height="160%">
+          <feDropShadow dx="0" dy="1.4" stdDeviation="1.4" floodColor="#000" floodOpacity="0.4" />
         </filter>
-        <radialGradient id={faceGrad} cx="36%" cy="30%" r="80%">
+        <radialGradient id={grad} cx="38%" cy="30%" r="85%">
           {white ? (
             <>
               <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="55%" stopColor="#f1efe9" />
-              <stop offset="100%" stopColor="#d8d4ca" />
+              <stop offset="55%" stopColor="#f0eee8" />
+              <stop offset="100%" stopColor="#cfcbc0" />
             </>
           ) : (
             <>
-              <stop offset="0%" stopColor="#54545a" />
-              <stop offset="55%" stopColor="#33333a" />
-              <stop offset="100%" stopColor="#1a1a1e" />
+              <stop offset="0%" stopColor="#5a5a61" />
+              <stop offset="48%" stopColor="#34343b" />
+              <stop offset="100%" stopColor="#141418" />
             </>
           )}
         </radialGradient>
-        <linearGradient id={rimGrad} x1="0.2" y1="0" x2="0.8" y2="1">
-          {white ? (
-            <>
-              <stop offset="0%" stopColor="#eceae3" />
-              <stop offset="50%" stopColor="#c7c3b8" />
-              <stop offset="100%" stopColor="#98948a" />
-            </>
-          ) : (
-            <>
-              <stop offset="0%" stopColor="#45454b" />
-              <stop offset="50%" stopColor="#2a2a30" />
-              <stop offset="100%" stopColor="#0e0e12" />
-            </>
-          )}
-        </linearGradient>
       </defs>
 
-      {/* disc = rim + face, with the shadow applied to the whole disc group */}
+      {/* flat contact shadow beneath the base */}
+      <ellipse cx={45} cy={85} rx={24} ry={4} fill="rgba(0,0,0,0.26)" />
+
       <g filter={`url(#${shadow})`}>
-        <circle cx={cx} cy={cy} r={rim} fill={`url(#${rimGrad})`} />
-        <circle
-          cx={cx}
-          cy={cy}
-          r={face + 1.4}
-          fill="none"
-          stroke={white ? 'rgba(120,116,104,0.5)' : 'rgba(0,0,0,0.5)'}
-          strokeWidth={0.9}
-        />
-        <circle
-          cx={cx}
-          cy={cy}
-          r={face}
-          fill={`url(#${faceGrad})`}
-          stroke={white ? 'rgba(150,146,134,0.5)' : 'rgba(0,0,0,0.4)'}
-          strokeWidth={0.6}
-        />
+        <Body type={type} fill={fill} stroke={stroke} sw={sw} />
+        <Base fill={fill} stroke={stroke} sw={sw} />
       </g>
-
-      {/* soft top sheen (subtle, no hard hot-spot) */}
-      <ellipse
-        cx={cx - face * 0.24}
-        cy={cy - face * 0.32}
-        rx={face * 0.48}
-        ry={face * 0.3}
-        fill={white ? 'rgba(255,255,255,0.32)' : 'rgba(255,255,255,0.1)'}
-      />
-
-      {/* LARGE chess symbol, sized per rank; contrasts the disc */}
-      <text
-        x={cx}
-        y={cy + 1}
-        textAnchor="middle"
-        dominantBaseline="central"
-        style={{ fontSize: face * GLYPH_SCALE[type] }}
-        fill={white ? '#23232a' : '#f4f2ec'}
-        stroke={white ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.35)'}
-        strokeWidth={0.5}
-        paintOrder="stroke"
-      >
-        {GLYPH[type]}
-      </text>
     </g>
   );
 }

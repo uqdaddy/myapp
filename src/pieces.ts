@@ -19,7 +19,7 @@ export const PIECE_LABEL: Record<Side, Record<PieceType, string>> = {
     elephant: '象',
     horse: '馬',
     chariot: '車',
-    cannon: '砲',
+    cannon: '包', // same as Cho's cannon (unified per request)
     soldier: '兵',
   },
 };
