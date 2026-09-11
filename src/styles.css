@@ -984,11 +984,6 @@ body {
   stroke-width: 2.5;
   animation: winPulse 0.9s ease-in-out infinite;
 }
-.gwin-line {
-  stroke: rgba(255, 59, 48, 0.55);
-  stroke-width: 4;
-  stroke-linecap: round;
-}
 @keyframes winPulse {
   0%,
   100% {

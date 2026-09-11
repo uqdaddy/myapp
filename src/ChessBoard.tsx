@@ -52,33 +52,42 @@ export function ChessBoard({
           <stop offset="50%" stopColor="#2a2a2d" />
           <stop offset="100%" stopColor="#161618" />
         </linearGradient>
-        {/* light + dark squares: off-white vs charcoal-grey (B&W theme) */}
+        {/* light + dark MARBLE squares: cream/white vs charcoal, with a soft
+            polished sheen from the diagonal gradient */}
         <linearGradient id="cLight" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#f5f5f6" />
-          <stop offset="100%" stopColor="#e3e3e6" />
+          <stop offset="0%" stopColor="#fbfaf7" />
+          <stop offset="100%" stopColor="#e7e4dc" />
         </linearGradient>
         <linearGradient id="cDark" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#5c5c63" />
-          <stop offset="100%" stopColor="#44444a" />
+          <stop offset="0%" stopColor="#4c4c53" />
+          <stop offset="100%" stopColor="#34343a" />
         </linearGradient>
-        {/* very subtle matte texture over the whole playfield */}
-        <filter id="cGrain" x="0" y="0" width="100%" height="100%">
+        {/* MARBLE VEINS: wispy turbulence turned into thin translucent streaks,
+            overlaid across the whole playfield for a polished-marble look. */}
+        <filter id="cMarble" x="0" y="0" width="100%" height="100%">
           <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.9 0.9"
-            numOctaves={2}
-            seed={9}
+            type="turbulence"
+            baseFrequency="0.014 0.03"
+            numOctaves={4}
+            seed={13}
             stitchTiles="stitch"
-            result="n"
+            result="turb"
           />
+          {/* sharpen the turbulence into vein-like ridges */}
           <feColorMatrix
-            in="n"
+            in="turb"
             type="matrix"
-            values="0 0 0 0 0.4
-                    0 0 0 0 0.4
-                    0 0 0 0 0.43
-                    0 0 0 0.05 0"
+            values="0 0 0 0 0.55
+                    0 0 0 0 0.55
+                    0 0 0 0 0.58
+                    0 0 0 2.2 -0.9"
+            result="veins"
           />
+          {/* keep only the thin bright ridges (soft) */}
+          <feComponentTransfer in="veins" result="softveins">
+            <feFuncA type="gamma" amplitude="1" exponent="2.2" offset="0" />
+          </feComponentTransfer>
+          <feComposite in="softveins" operator="over" />
         </filter>
         <filter id="cBorderGrain" x="0" y="0" width="100%" height="100%">
           <feTurbulence type="fractalNoise" baseFrequency="0.8 0.8" numOctaves={2} seed={4} stitchTiles="stitch" result="n" />
@@ -138,8 +147,11 @@ export function ChessBoard({
           );
         })
       )}
-      {/* grain + vignette over the squares */}
-      <rect x={LABEL} y={LABEL} width={BOARD} height={BOARD} filter="url(#cGrain)" opacity={0.35} />
+      {/* marble veining across the whole playfield (light veins read on the
+          dark squares; a second darker pass reads on the light squares) */}
+      <rect x={LABEL} y={LABEL} width={BOARD} height={BOARD} filter="url(#cMarble)" opacity={0.5} style={{ mixBlendMode: 'screen' }} />
+      <rect x={LABEL} y={LABEL} width={BOARD} height={BOARD} filter="url(#cMarble)" opacity={0.32} style={{ mixBlendMode: 'multiply' }} />
+      {/* polished vignette over the squares */}
       <rect x={LABEL} y={LABEL} width={BOARD} height={BOARD} fill="url(#cVignette)" />
 
       {/* last-move highlight */}

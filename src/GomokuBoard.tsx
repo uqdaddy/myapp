@@ -247,17 +247,6 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled, winningLine 
           );
         })
       )}
-
-      {/* connecting line through the winning stones */}
-      {winningLine && winningLine.length >= 2 && (
-        <line
-          x1={x(winningLine[0].c)}
-          y1={y(winningLine[0].r)}
-          x2={x(winningLine[winningLine.length - 1].c)}
-          y2={y(winningLine[winningLine.length - 1].r)}
-          className="gwin-line"
-        />
-      )}
     </svg>
   );
 }
