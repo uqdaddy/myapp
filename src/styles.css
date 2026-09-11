@@ -338,6 +338,9 @@ body {
   font-size: 13px;
   font-weight: 700;
 }
+.chess-tray .tray-name {
+  color: #e0d3bd;
+}
 .name-cho {
   color: #2ec77a;
 }
@@ -720,7 +723,7 @@ body {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   padding: calc(env(safe-area-inset-top) + 24px) 16px calc(env(safe-area-inset-bottom) + 24px);
   gap: 22px;
   background: #201b18; /* plain background — no artwork */

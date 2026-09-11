@@ -40,7 +40,7 @@ export function InAppNotice() {
   return (
     <div className="inapp">
       <div className="inapp-card">
-        <h1 className="inapp-title">장기 · 오목</h1>
+        <h1 className="inapp-title">장기 · 체스 · 오목</h1>
         <p className="inapp-msg">
           카카오톡 안에서는 게임이 제대로 실행되지 않아요.
           <br />

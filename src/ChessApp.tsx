@@ -1,6 +1,7 @@
 import { GameActions } from './GameActions';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChessBoard } from './ChessBoard';
+import { ChessCapturedTray } from './ChessCapturedTray';
 import { ChessPiece } from './ChessPiece';
 import { initialState } from './engine/chess/board';
 import {
@@ -26,6 +27,7 @@ import {
   CSide,
   CState,
   CPieceType,
+  CPiece,
   cOpponent,
 } from './engine/chess/types';
 
@@ -44,6 +46,7 @@ export function ChessApp({ onExit }: { onExit?: () => void }) {
   const [difficulty, setDifficulty] = useState<ChessDifficulty>('normal');
 
   const [state, setState] = useState<CState>(() => initialState());
+  const [captured, setCaptured] = useState<CPiece[]>([]);
   const [selected, setSelected] = useState<CPos | null>(null);
   const [lastMove, setLastMove] = useState<CMove | null>(null);
   const [thinking, setThinking] = useState(false);
@@ -84,6 +87,7 @@ export function ChessApp({ onExit }: { onExit?: () => void }) {
   const doMove = useCallback((move: CMove) => {
     playPlaceSound(!!move.captured || !!move.castle);
     setState((s) => advanceState(s, move));
+    if (move.captured) setCaptured(pieces => [...pieces, move.captured!]);
     setLastMove(move);
     setSelected(null);
   }, []);
@@ -194,6 +198,7 @@ export function ChessApp({ onExit }: { onExit?: () => void }) {
     setDifficulty(diff);
     setChessSkill(CHESS_DIFFICULTY[diff].skill).catch(() => {});
     setState(init);
+    setCaptured([]);
     setSelected(null);
     setLastMove(null);
     setThinking(false);
@@ -259,6 +264,7 @@ export function ChessApp({ onExit }: { onExit?: () => void }) {
             : statusText}
       </div>
 
+      <ChessCapturedTray owner={aiSide} captured={captured} board={state.board} label={`AI (${SIDE_NAME[aiSide]})`} />
       <div className="board-wrap">
         <ChessBoard
           board={state.board}
@@ -323,6 +329,7 @@ export function ChessApp({ onExit }: { onExit?: () => void }) {
         )}
       </div>
 
+      <ChessCapturedTray owner={humanSide} captured={captured} board={state.board} label={`나 (${SIDE_NAME[humanSide]})`} />
       <GameActions onExit={onExit} onNewGame={backToSetup} />
     </div>
   );

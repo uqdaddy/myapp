@@ -1,7 +1,7 @@
 {
-  "name": "장기",
-  "short_name": "장기",
-  "description": "AI와 대전하는 한국 장기 웹앱",
+  "name": "장기 · 체스 · 오목",
+  "short_name": "보드게임",
+  "description": "장기, 체스, 오목을 선택해 AI와 대국하는 보드게임",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
