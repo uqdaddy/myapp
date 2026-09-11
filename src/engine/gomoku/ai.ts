@@ -4,7 +4,7 @@
 
 import { GBoard, GPos, SIZE, Stone, idx, inBounds, otherStone } from './types';
 import { isWinningMove } from './rules';
-import { evaluateFor, moveThreatScore, SCORE } from './threats';
+import { bestThreatAt, evaluateFor, moveThreatScore, SCORE } from './threats';
 
 export type GDifficulty = 'easy' | 'normal' | 'hard';
 
@@ -56,6 +56,66 @@ function findWinningMove(b: GBoard, cells: GPos[], s: Stone): GPos | null {
     if (win) return { r, c };
   }
   return null;
+}
+
+// First cell where `s` creates a threat of at least `tier`, or null.
+function findThreatMove(b: GBoard, cells: GPos[], s: Stone, tier: number): GPos | null {
+  for (const p of cells) {
+    if (bestThreatAt(b, p.r, p.c, s) >= tier) return p;
+  }
+  return null;
+}
+
+// Does `opp` currently have a standing threat of at least `tier`? (i.e. can
+// they reach it with their NEXT move from the current position).
+function oppHasThreat(b: GBoard, cells: GPos[], opp: Stone, tier: number): boolean {
+  return findThreatMove(b, cells, opp, tier) !== null;
+}
+
+// Candidate BLOCKING cells against `opp`: squares where, if WE (me) play there,
+// the opponent can no longer reach `residualTier` on their next move.
+//
+// The residual tier matters. Blocking a four means: after our move the opponent
+// cannot make FIVE (residualTier = FIVE). Blocking an open three means: after
+// our move the opponent cannot make an OPEN_FOUR (residualTier = OPEN_FOUR) —
+// a leftover simple four is acceptable because we can block that next turn.
+function blockingCells(
+  b: GBoard,
+  cells: GPos[],
+  me: Stone,
+  opp: Stone,
+  residualTier: number
+): GPos[] {
+  const out: GPos[] = [];
+  for (const p of cells) {
+    b[idx(p.r, p.c)] = me; // occupy it
+    let stillThreat = false;
+    const remaining = candidateCells(b);
+    for (const q of remaining) {
+      if (bestThreatAt(b, q.r, q.c, opp) >= residualTier) {
+        stillThreat = true;
+        break;
+      }
+    }
+    b[idx(p.r, p.c)] = null;
+    if (!stillThreat) out.push(p);
+  }
+  return out;
+}
+
+// Among `cells`, pick the one that maximizes our own combined attack+defense
+// value (so a block that also develops our position wins ties).
+function pickBest(b: GBoard, cells: GPos[], me: Stone): GPos {
+  let best = cells[0];
+  let bestScore = -Infinity;
+  for (const p of cells) {
+    const s = moveThreatScore(b, p.r, p.c, me);
+    if (s > bestScore) {
+      bestScore = s;
+      best = p;
+    }
+  }
+  return best;
 }
 
 // Order candidates by threat score (best first) and cap to `limit`.
@@ -144,6 +204,36 @@ export function chooseGomokuMove(
   const opp = otherStone(me);
   const oppWin = findWinningMove(b, cells, opp);
   if (oppWin) return { move: oppWin, score: 0 };
+
+  // 2b) If WE can make an open four (a guaranteed win next move), do it.
+  const myOpenFour = findThreatMove(b, cells, me, SCORE.OPEN_FOUR);
+  if (myOpenFour) return { move: myOpenFour, score: SCORE.OPEN_FOUR };
+
+  // 2c) The opponent has a FOUR threat (one move from five). We must occupy
+  //     the completion square so they cannot make five, unless we can make our
+  //     own open four/win first (which forces them to answer us instead).
+  if (oppHasThreat(b, cells, opp, SCORE.FOUR)) {
+    const myOF = findThreatMove(b, cells, me, SCORE.OPEN_FOUR);
+    if (myOF) return { move: myOF, score: SCORE.OPEN_FOUR };
+    const blocks = blockingCells(b, cells, me, opp, SCORE.FIVE);
+    if (blocks.length > 0) return { move: pickBest(b, blocks, me), score: 0 };
+  }
+
+  // 2d) The opponent has an OPEN THREE — if ignored it becomes an open four
+  //     (a loss). This is exactly the case the user hit: the AI must block the
+  //     open three rather than extend its own weaker shape. Blocking one end is
+  //     enough (it leaves only a simple, answerable four).
+  if (oppHasThreat(b, cells, opp, SCORE.OPEN_THREE)) {
+    // Prefer creating our own forcing four (opponent must answer us instead).
+    const myFour = findThreatMove(b, cells, me, SCORE.FOUR);
+    if (myFour) return { move: myFour, score: SCORE.FOUR };
+    const blocks = blockingCells(b, cells, me, opp, SCORE.OPEN_FOUR);
+    if (blocks.length > 0) return { move: pickBest(b, blocks, me), score: 0 };
+  }
+
+  // 2e) Nobody forcing us: if we can safely make an open three, prefer it.
+  const myOpenThree = findThreatMove(b, cells, me, SCORE.OPEN_THREE);
+  if (myOpenThree) return { move: myOpenThree, score: SCORE.OPEN_THREE };
 
   // 3) Iterative deepening search.
   const timer = new Timer(timeMs);
