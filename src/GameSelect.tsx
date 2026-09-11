@@ -124,7 +124,6 @@ export function GameSelect({ onSelect }: Props) {
   return (
     <div className="gameselect">
       <div className="gs-header">
-        <div className="gs-logo">棋</div>
         <h1 className="gs-title">보드게임</h1>
         <p className="gs-sub">AI와 대전할 게임을 골라주세요</p>
       </div>
