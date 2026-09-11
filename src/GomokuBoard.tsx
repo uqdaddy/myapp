@@ -93,19 +93,12 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled, winningLine 
           <stop offset="70%" stopColor="#141414" />
           <stop offset="100%" stopColor="#000" />
         </radialGradient>
-        {/* white stone: clamshell (hamaguri) look — bright top-left, warm
-            off-white body, distinctly shaded lower-right for a rounded 3D bead */}
-        <radialGradient id="whiteStone" cx="34%" cy="26%" r="88%">
+        {/* A single smooth surface keeps the white stone clean and round. */}
+        <radialGradient id="whiteStone" cx="36%" cy="30%" r="78%">
           <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="34%" stopColor="#f6f4ee" />
-          <stop offset="72%" stopColor="#e0dcd2" />
-          <stop offset="100%" stopColor="#b6b1a6" />
-        </radialGradient>
-        {/* faint warm reflected-light band along the bottom edge of a white
-            stone (light bouncing off the board) */}
-        <radialGradient id="whiteBounce" cx="50%" cy="88%" r="55%">
-          <stop offset="0%" stopColor="rgba(255,246,225,0.6)" />
-          <stop offset="100%" stopColor="rgba(255,246,225,0)" />
+          <stop offset="48%" stopColor="#fafbfc" />
+          <stop offset="80%" stopColor="#e8ecef" />
+          <stop offset="100%" stopColor="#cbd2d7" />
         </radialGradient>
 
         <filter id="gStoneShadow" x="-40%" y="-40%" width="180%" height="180%">
@@ -191,36 +184,17 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled, winningLine 
                     cy={py}
                     r={R}
                     fill={v === 'black' ? 'url(#blackStone)' : 'url(#whiteStone)'}
-                    stroke={v === 'white' ? 'rgba(120,114,102,0.5)' : 'rgba(0,0,0,0.5)'}
+                    stroke={v === 'white' ? 'rgba(105,119,128,0.65)' : 'rgba(0,0,0,0.5)'}
                     strokeWidth={0.6}
                   />
-                  {/* white stone: darkened lower-right crescent for roundness +
-                      a warm reflected-light band along the bottom (gives the
-                      clamshell bead its 3D pop). Drawn under the highlights. */}
-                  {v === 'white' && (
-                    <>
-                      <circle
-                        cx={px + R * 0.16}
-                        cy={py + R * 0.2}
-                        r={R * 0.96}
-                        fill="rgba(120,112,96,0.14)"
-                      />
-                      <ellipse
-                        cx={px}
-                        cy={py + R * 0.5}
-                        rx={R * 0.7}
-                        ry={R * 0.42}
-                        fill="url(#whiteBounce)"
-                      />
-                    </>
-                  )}
+                  {v === 'black' && <>
                   {/* broad soft sheen */}
                   <ellipse
                     cx={px - R * 0.26}
                     cy={py - R * 0.3}
                     rx={R * 0.56}
                     ry={R * 0.44}
-                    fill={v === 'black' ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.38)'}
+                    fill="rgba(255,255,255,0.14)"
                   />
                   {/* tight specular highlight */}
                   <ellipse
@@ -228,8 +202,9 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled, winningLine 
                     cy={py - R * 0.36}
                     rx={R * 0.3}
                     ry={R * 0.2}
-                    fill={v === 'black' ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.95)'}
+                    fill="rgba(255,255,255,0.6)"
                   />
+                  </>}
                   {isLast && !winSet.has(idx(r, c)) && (
                     <circle
                       cx={px}

@@ -147,8 +147,8 @@ export function ChessBoard({
       {/* last-move highlight */}
       {lastMove && (
         <>
-          <rect x={px(lastMove.from.c)} y={py(lastMove.from.r)} width={SQ} height={SQ} className="clast" />
-          <rect x={px(lastMove.to.c)} y={py(lastMove.to.r)} width={SQ} height={SQ} className="clast" />
+          <rect x={px(lastMove.from.c) + 2.5} y={py(lastMove.from.r) + 2.5} width={SQ - 5} height={SQ - 5} rx={2} className="clast clast-from" />
+          <rect x={px(lastMove.to.c) + 2.5} y={py(lastMove.to.r) + 2.5} width={SQ - 5} height={SQ - 5} rx={2} className="clast clast-to" />
         </>
       )}
 

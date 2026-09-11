@@ -943,9 +943,18 @@ body {
   font-weight: 700;
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
-/* highlights (square overlays) — chosen to read on green/cream marble */
+/* Inset outlines preserve the wooden checkerboard under the last move. */
 .clast {
-  fill: rgba(255, 214, 120, 0.42);
+  fill: none;
+  stroke: #164d64;
+  stroke-width: 2.5;
+  pointer-events: none;
+}
+.clast-from {
+  stroke-dasharray: 4 3;
+}
+.clast-to {
+  stroke-width: 3;
 }
 .csel {
   fill: rgba(255, 200, 90, 0.5);
