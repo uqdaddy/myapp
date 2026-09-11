@@ -32,7 +32,7 @@ const SIDE_NAME: Record<Side, string> = { cho: '초', han: '한' };
 
 type Phase = 'setup' | 'playing';
 
-export default function App() {
+export default function App({ onExit }: { onExit?: () => void } = {}) {
   const [phase, setPhase] = useState<Phase>('setup');
   const [humanSide, setHumanSide] = useState<Side>('cho');
   const [board, setBoard] = useState<BoardState>(() => initialBoard());
@@ -309,7 +309,7 @@ export default function App() {
   }
 
   if (phase === 'setup') {
-    return <SetupScreen onStart={startGame} />;
+    return <SetupScreen onStart={startGame} onBack={onExit} />;
   }
 
   return (

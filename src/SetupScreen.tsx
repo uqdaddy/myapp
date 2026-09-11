@@ -10,6 +10,7 @@ export interface StartConfig {
 
 interface Props {
   onStart: (config: StartConfig) => void;
+  onBack?: () => void; // return to the game-select menu
 }
 
 type Step = 'side' | 'formation' | 'difficulty';
@@ -25,7 +26,7 @@ const DIFF_DESC: Record<Difficulty, string> = {
   hard: '최고 실력',
 };
 
-export function SetupScreen({ onStart }: Props) {
+export function SetupScreen({ onStart, onBack }: Props) {
   const [step, setStep] = useState<Step>('side');
   const [side, setSide] = useState<Side>('cho');
   const [left, setLeft] = useState<WingSetup>('horse-outer');
@@ -36,6 +37,11 @@ export function SetupScreen({ onStart }: Props) {
 
   return (
     <div className="setup">
+      {onBack && (
+        <button className="back-link" onClick={onBack}>
+          ← 게임 선택
+        </button>
+      )}
       <h1 className="setup-title">장기</h1>
       <p className="setup-sub">AI와 대전 · 시작 전에 설정을 골라주세요</p>
 
