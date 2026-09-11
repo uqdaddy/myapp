@@ -41,24 +41,24 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled, winningLine 
       aria-label="오목판"
     >
       <defs>
-        {/* board surface: light-grey / off-white (black & white theme) */}
-        <linearGradient id="gWood" x1="0" y1="0" x2="0.9" y2="1">
-          <stop offset="0%" stopColor="#fafafa" />
-          <stop offset="50%" stopColor="#ececed" />
-          <stop offset="100%" stopColor="#dadade" />
+        {/* premium hardwood surface: warm honey tones (like a fine goban) */}
+        <linearGradient id="gWood" x1="0" y1="0" x2="0.85" y2="1">
+          <stop offset="0%" stopColor="#ecc98d" />
+          <stop offset="48%" stopColor="#deb673" />
+          <stop offset="100%" stopColor="#c99a52" />
         </linearGradient>
-        {/* charcoal frame */}
+        {/* dark walnut frame */}
         <linearGradient id="gBorder" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#3a3a3e" />
-          <stop offset="50%" stopColor="#2a2a2d" />
-          <stop offset="100%" stopColor="#161618" />
+          <stop offset="0%" stopColor="#7a4e28" />
+          <stop offset="50%" stopColor="#5c3a1c" />
+          <stop offset="100%" stopColor="#3c2410" />
         </linearGradient>
-        {/* fine matte grey texture */}
+        {/* broad figure grain */}
         <filter id="gGrain" x="0" y="0" width="100%" height="100%">
           <feTurbulence
             type="fractalNoise"
-            baseFrequency="0.9 0.9"
-            numOctaves={2}
+            baseFrequency="0.006 0.05"
+            numOctaves={5}
             seed={11}
             stitchTiles="stitch"
             result="n"
@@ -66,15 +66,24 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled, winningLine 
           <feColorMatrix
             in="n"
             type="matrix"
-            values="0 0 0 0 0.35
-                    0 0 0 0 0.35
-                    0 0 0 0 0.38
-                    0 0 0 0.06 0"
+            values="0 0 0 0 0.42
+                    0 0 0 0 0.27
+                    0 0 0 0 0.10
+                    0 0 0 0.5 0"
           />
         </filter>
+        {/* fine grain for the polished top layer */}
+        <filter id="gGrainFine" x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.02 0.5" numOctaves={3} seed={23} stitchTiles="stitch" result="n" />
+          <feColorMatrix in="n" type="matrix"
+            values="0 0 0 0 0.34
+                    0 0 0 0 0.22
+                    0 0 0 0 0.09
+                    0 0 0 0.2 0" />
+        </filter>
         <radialGradient id="gVignette" cx="50%" cy="46%" r="72%">
-          <stop offset="62%" stopColor="rgba(0,0,0,0)" />
-          <stop offset="100%" stopColor="rgba(20,20,24,0.13)" />
+          <stop offset="60%" stopColor="rgba(0,0,0,0)" />
+          <stop offset="100%" stopColor="rgba(60,34,8,0.28)" />
         </radialGradient>
 
         {/* black stone: glossy with a bright highlight */}
@@ -84,11 +93,19 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled, winningLine 
           <stop offset="70%" stopColor="#141414" />
           <stop offset="100%" stopColor="#000" />
         </radialGradient>
-        {/* white stone: neutral pearl with subtle grey shading */}
-        <radialGradient id="whiteStone" cx="36%" cy="30%" r="82%">
+        {/* white stone: clamshell (hamaguri) look — bright top-left, warm
+            off-white body, distinctly shaded lower-right for a rounded 3D bead */}
+        <radialGradient id="whiteStone" cx="34%" cy="26%" r="88%">
           <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="55%" stopColor="#f0f0f2" />
-          <stop offset="100%" stopColor="#c9c9cf" />
+          <stop offset="34%" stopColor="#f6f4ee" />
+          <stop offset="72%" stopColor="#e0dcd2" />
+          <stop offset="100%" stopColor="#b6b1a6" />
+        </radialGradient>
+        {/* faint warm reflected-light band along the bottom edge of a white
+            stone (light bouncing off the board) */}
+        <radialGradient id="whiteBounce" cx="50%" cy="88%" r="55%">
+          <stop offset="0%" stopColor="rgba(255,246,225,0.6)" />
+          <stop offset="100%" stopColor="rgba(255,246,225,0)" />
         </radialGradient>
 
         <filter id="gStoneShadow" x="-40%" y="-40%" width="180%" height="180%">
@@ -133,9 +150,10 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled, winningLine 
         stroke="rgba(255,228,175,0.28)"
         strokeWidth={1}
       />
-      {/* playing surface + grain + vignette */}
+      {/* playing surface: base wood + broad grain + fine grain + vignette */}
       <rect x={0} y={0} width={W} height={W} rx={3} fill="url(#gWood)" />
-      <rect x={0} y={0} width={W} height={W} rx={3} filter="url(#gGrain)" opacity={0.45} />
+      <rect x={0} y={0} width={W} height={W} rx={3} filter="url(#gGrain)" opacity={0.42} />
+      <rect x={0} y={0} width={W} height={W} rx={3} filter="url(#gGrainFine)" opacity={0.32} />
       <rect x={0} y={0} width={W} height={W} rx={3} fill="url(#gVignette)" />
 
       {/* grid lines */}
@@ -173,16 +191,36 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled, winningLine 
                     cy={py}
                     r={R}
                     fill={v === 'black' ? 'url(#blackStone)' : 'url(#whiteStone)'}
-                    stroke={v === 'white' ? 'rgba(150,145,135,0.6)' : 'rgba(0,0,0,0.5)'}
+                    stroke={v === 'white' ? 'rgba(120,114,102,0.5)' : 'rgba(0,0,0,0.5)'}
                     strokeWidth={0.6}
                   />
+                  {/* white stone: darkened lower-right crescent for roundness +
+                      a warm reflected-light band along the bottom (gives the
+                      clamshell bead its 3D pop). Drawn under the highlights. */}
+                  {v === 'white' && (
+                    <>
+                      <circle
+                        cx={px + R * 0.16}
+                        cy={py + R * 0.2}
+                        r={R * 0.96}
+                        fill="rgba(120,112,96,0.14)"
+                      />
+                      <ellipse
+                        cx={px}
+                        cy={py + R * 0.5}
+                        rx={R * 0.7}
+                        ry={R * 0.42}
+                        fill="url(#whiteBounce)"
+                      />
+                    </>
+                  )}
                   {/* broad soft sheen */}
                   <ellipse
                     cx={px - R * 0.26}
                     cy={py - R * 0.3}
                     rx={R * 0.56}
                     ry={R * 0.44}
-                    fill={v === 'black' ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.4)'}
+                    fill={v === 'black' ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.38)'}
                   />
                   {/* tight specular highlight */}
                   <ellipse

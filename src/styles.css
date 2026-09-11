@@ -143,19 +143,19 @@ body {
 }
 
 .grid-line {
-  stroke: #33333a;
+  stroke: #4a2f14;
   stroke-width: 1.3;
   stroke-linecap: round;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
-/* Octagonal light-grey stones with a lit face and engraved character. */
+/* Octagonal ivory stones with a lit face and engraved character. */
 .piece-group {
   pointer-events: none;
 }
 
 .piece-oct {
-  stroke: rgba(90, 90, 96, 0.5);
+  stroke: rgba(120, 90, 45, 0.5);
   stroke-width: 0.8;
 }
 .piece-edge {
@@ -176,7 +176,7 @@ body {
 }
 
 .piece-selected {
-  stroke: #5a5a62;
+  stroke: #b8791f;
   stroke-width: 2.2;
 }
 
@@ -195,7 +195,7 @@ body {
 }
 /* pale emboss copy sitting under the colored glyph */
 .piece-label-emboss {
-  fill: rgba(255, 255, 255, 0.55);
+  fill: rgba(255, 250, 235, 0.6);
 }
 
 .target-dot {
@@ -959,13 +959,13 @@ body {
   touch-action: manipulation;
 }
 .gline {
-  stroke: #33333a;
+  stroke: #3d2610;
   stroke-width: 1.2;
   stroke-linecap: round;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 .gstar {
-  fill: #33333a;
+  fill: #3d2610;
 }
 .glast {
   fill: none;

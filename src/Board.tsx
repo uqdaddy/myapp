@@ -65,30 +65,31 @@ export function Board({
       aria-label="장기판"
     >
       <defs>
-        {/* board surface: clean off-white / light-grey (black & white theme) */}
-        <linearGradient id="woodGrad" x1="0" y1="0" x2="0.9" y2="1">
-          <stop offset="0%" stopColor="#fafafa" />
-          <stop offset="55%" stopColor="#ededf0" />
-          <stop offset="100%" stopColor="#dcdce0" />
+        {/* premium hardwood surface: warm honey tones with depth */}
+        <linearGradient id="woodGrad" x1="0" y1="0" x2="0.85" y2="1">
+          <stop offset="0%" stopColor="#e7bd82" />
+          <stop offset="45%" stopColor="#d8a862" />
+          <stop offset="100%" stopColor="#bf8c46" />
         </linearGradient>
-        {/* charcoal frame */}
+        {/* dark walnut frame */}
         <linearGradient id="woodBorder" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#3a3a3e" />
-          <stop offset="50%" stopColor="#2a2a2d" />
-          <stop offset="100%" stopColor="#161618" />
+          <stop offset="0%" stopColor="#7a4e28" />
+          <stop offset="50%" stopColor="#5c3a1c" />
+          <stop offset="100%" stopColor="#3c2410" />
         </linearGradient>
-        {/* soft neutral vignette for depth */}
-        <radialGradient id="vignette" cx="50%" cy="45%" r="72%">
-          <stop offset="58%" stopColor="rgba(0,0,0,0)" />
-          <stop offset="100%" stopColor="rgba(20,20,24,0.14)" />
+        {/* soft warm vignette for depth */}
+        <radialGradient id="vignette" cx="50%" cy="44%" r="74%">
+          <stop offset="55%" stopColor="rgba(0,0,0,0)" />
+          <stop offset="100%" stopColor="rgba(60,34,8,0.30)" />
         </radialGradient>
 
-        {/* fine matte texture on the surface (very subtle grey noise) */}
+        {/* BROAD figure grain: long, low-frequency streaks running lengthwise,
+            giving the "cathedral"/plank look of real hardwood. */}
         <filter id="woodGrain" x="0" y="0" width="100%" height="100%">
           <feTurbulence
             type="fractalNoise"
-            baseFrequency="0.9 0.9"
-            numOctaves={2}
+            baseFrequency="0.006 0.055"
+            numOctaves={5}
             seed={7}
             stitchTiles="stitch"
             result="noise"
@@ -96,53 +97,64 @@ export function Board({
           <feColorMatrix
             in="noise"
             type="matrix"
-            values="0 0 0 0 0.35
-                    0 0 0 0 0.35
-                    0 0 0 0 0.38
-                    0 0 0 0.06 0"
+            values="0 0 0 0 0.40
+                    0 0 0 0 0.25
+                    0 0 0 0 0.09
+                    0 0 0 0.55 0"
             result="grain"
           />
         </filter>
-        {/* texture for the charcoal border */}
-        <filter id="woodGrainBorder" x="0" y="0" width="100%" height="100%">
+        {/* FINE grain: tight high-frequency lines for the polished top layer */}
+        <filter id="woodGrainFine" x="0" y="0" width="100%" height="100%">
           <feTurbulence
             type="fractalNoise"
-            baseFrequency="0.8 0.8"
-            numOctaves={2}
-            seed={3}
+            baseFrequency="0.02 0.5"
+            numOctaves={3}
+            seed={19}
             stitchTiles="stitch"
             result="noise"
           />
           <feColorMatrix
             in="noise"
             type="matrix"
-            values="0 0 0 0 0.06
-                    0 0 0 0 0.06
-                    0 0 0 0 0.07
-                    0 0 0 0.5 0"
+            values="0 0 0 0 0.32
+                    0 0 0 0 0.20
+                    0 0 0 0 0.08
+                    0 0 0 0.22 0"
           />
         </filter>
+        {/* grain for the walnut border, running vertically */}
+        <filter id="woodGrainBorder" x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.02 0.16" numOctaves={3} seed={3} stitchTiles="stitch" result="noise" />
+          <feColorMatrix in="noise" type="matrix"
+            values="0 0 0 0 0.14
+                    0 0 0 0 0.08
+                    0 0 0 0 0.03
+                    0 0 0 0.55 0" />
+        </filter>
 
-        {/* stone face: bright white-grey, lit from top-left */}
-        <radialGradient id="stoneFace" cx="35%" cy="28%" r="82%">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="45%" stopColor="#f2f2f4" />
-          <stop offset="100%" stopColor="#d3d3d8" />
+        {/* IVORY stone face: warm off-white, softly lit — reads as carved bone
+            rather than plastic (no single hard highlight). */}
+        <radialGradient id="stoneFace" cx="36%" cy="26%" r="84%">
+          <stop offset="0%" stopColor="#fffdf6" />
+          <stop offset="30%" stopColor="#faf1d8" />
+          <stop offset="70%" stopColor="#eeddb4" />
+          <stop offset="100%" stopColor="#d8be8a" />
         </radialGradient>
-        {/* grey rim giving each disc a rounded thickness */}
-        <linearGradient id="stoneRim" x1="0.15" y1="0" x2="0.85" y2="1">
-          <stop offset="0%" stopColor="#e8e8ec" />
-          <stop offset="45%" stopColor="#b7b7bd" />
-          <stop offset="100%" stopColor="#7c7c82" />
+        {/* ivory rim: aged bone edge, darker at the bottom for thickness */}
+        <linearGradient id="stoneRim" x1="0.2" y1="0" x2="0.8" y2="1">
+          <stop offset="0%" stopColor="#f3e6c4" />
+          <stop offset="50%" stopColor="#d3bb88" />
+          <stop offset="100%" stopColor="#a88a56" />
         </linearGradient>
-        {/* subtle grey grain on each stone face */}
+        {/* fine ivory grain / mottling on each face */}
         <filter id="stoneGrain" x="-20%" y="-20%" width="140%" height="140%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.6 0.4" numOctaves={2} seed={11} result="n" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.35 0.55" numOctaves={2} seed={11} result="n" />
           <feColorMatrix in="n" type="matrix"
-            values="0 0 0 0 0.5
-                    0 0 0 0 0.5
-                    0 0 0 0 0.52
-                    0 0 0 0.06 0" />
+            values="0 0 0 0 0.55
+                    0 0 0 0 0.44
+                    0 0 0 0 0.22
+                    0 0 0 0.08 0" />
         </filter>
 
         <filter id="pieceShadow" x="-50%" y="-50%" width="200%" height="200%">
@@ -196,9 +208,10 @@ export function Board({
         stroke="rgba(255,225,170,0.25)"
         strokeWidth={1}
       />
-      {/* playing surface: base colour + procedural grain + vignette */}
+      {/* playing surface: base wood + broad figure grain + fine grain + vignette */}
       <rect x={0} y={0} width={W} height={H} rx={3} fill="url(#woodGrad)" />
-      <rect x={0} y={0} width={W} height={H} rx={3} filter="url(#woodGrain)" opacity={0.55} />
+      <rect x={0} y={0} width={W} height={H} rx={3} filter="url(#woodGrain)" opacity={0.5} />
+      <rect x={0} y={0} width={W} height={H} rx={3} filter="url(#woodGrainFine)" opacity={0.35} />
       <rect x={0} y={0} width={W} height={H} rx={3} fill="url(#vignette)" />
 
       {/* ALL horizontal lines (10 rows), full width */}
@@ -309,13 +322,14 @@ export function Board({
                         filter="url(#stoneGrain)"
                         opacity={0.5}
                       />
-                      {/* specular sheen highlight, upper-left */}
+                      {/* soft diffuse sheen, upper-left — gentle (ivory, not
+                          glossy plastic) */}
                       <ellipse
-                        cx={px - rad * 0.28}
-                        cy={py - rad * 0.34}
-                        rx={rad * 0.52}
-                        ry={rad * 0.34}
-                        fill="rgba(255,255,255,0.45)"
+                        cx={px - rad * 0.26}
+                        cy={py - rad * 0.32}
+                        rx={rad * 0.55}
+                        ry={rad * 0.4}
+                        fill="rgba(255,252,242,0.32)"
                       />
                       {/* top bevel highlight edge */}
                       <polygon points={octagonPoints(px, py, faceR)} className="piece-edge" />
