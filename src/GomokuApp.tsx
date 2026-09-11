@@ -177,12 +177,11 @@ export function GomokuApp({ onExit }: { onExit?: () => void }) {
       <div className="setup">
         {onExit && (
           <button className="back-link" onClick={onExit}>
-            ← 게임 선택
+            ◀ 게임 선택
           </button>
         )}
         <h1 className="setup-title">오목</h1>
         <p className="setup-sub">AI와 대전 · 시작 전에 설정을 골라주세요</p>
-        <p className="rule-note">자유룰 · 금수 없음 · 흑 선공 · 5개 이상 연속이면 승리</p>
 
         <div className="setup-card">
           <h2>돌 색 (흑이 먼저)</h2>

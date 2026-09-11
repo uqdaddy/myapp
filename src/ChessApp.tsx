@@ -356,11 +356,10 @@ function ChessSetup({
   return (
     <div className="setup">
       {onBack && (
-        <button className="back-link" onClick={onBack}>← 게임 선택</button>
+        <button className="back-link" onClick={onBack}>◀ 게임 선택</button>
       )}
       <h1 className="setup-title">체스</h1>
       <p className="setup-sub">AI와 대전 · 시작 전에 설정을 골라주세요</p>
-      <p className="rule-note">캐슬링·앙파상·승격 지원 · 50수 자동 무승부 · 반복 무승부는 미적용</p>
 
       <div className="setup-card">
         <h2>기물 색</h2>
