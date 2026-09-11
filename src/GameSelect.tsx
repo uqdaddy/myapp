@@ -15,7 +15,6 @@ export function GameSelect({ onSelect }: Props) {
         <button className="gs-card" onClick={() => onSelect('janggi')}>
           <span className="gs-icon janggi">楚</span>
           <span className="gs-name">장기</span>
-          <span className="gs-desc">한국 장기 · Fairy-Stockfish</span>
         </button>
 
         <button className="gs-card" onClick={() => onSelect('gomoku')}>
@@ -24,7 +23,6 @@ export function GameSelect({ onSelect }: Props) {
             <span className="gs-stone white" />
           </span>
           <span className="gs-name">오목</span>
-          <span className="gs-desc">15×15 · 자유형</span>
         </button>
       </div>
     </div>
