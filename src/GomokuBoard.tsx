@@ -7,9 +7,11 @@ interface Props {
   disabled?: boolean;
 }
 
-const MARGIN = 24; // px padding around the grid
+const MARGIN = 24; // px padding from frame to the outer grid line
 const GAP = 30; // px between grid lines
+const PAD = 14; // wooden border outside the grid
 const W = MARGIN * 2 + GAP * (SIZE - 1);
+const R = GAP * 0.46; // stone radius
 
 function x(c: number) {
   return MARGIN + c * GAP;
@@ -31,30 +33,82 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled }: Props) {
   return (
     <svg
       className="gboard"
-      viewBox={`0 0 ${W} ${W}`}
+      viewBox={`${-PAD} ${-PAD} ${W + PAD * 2} ${W + PAD * 2}`}
       xmlns="http://www.w3.org/2000/svg"
       role="img"
       aria-label="오목판"
     >
       <defs>
-        <radialGradient id="gWoodGrad" cx="50%" cy="45%" r="75%">
-          <stop offset="0%" stopColor="#f0c986" />
-          <stop offset="100%" stopColor="#d9a95e" />
+        {/* board wood base + border */}
+        <linearGradient id="gWood" x1="0" y1="0" x2="0.9" y2="1">
+          <stop offset="0%" stopColor="#f2cf8c" />
+          <stop offset="45%" stopColor="#e6b96f" />
+          <stop offset="100%" stopColor="#d3a057" />
+        </linearGradient>
+        <linearGradient id="gBorder" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#8a5a2c" />
+          <stop offset="100%" stopColor="#5a3818" />
+        </linearGradient>
+        {/* procedural wood grain */}
+        <filter id="gGrain" x="0" y="0" width="100%" height="100%">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.012 0.08"
+            numOctaves={4}
+            seed={11}
+            stitchTiles="stitch"
+            result="n"
+          />
+          <feColorMatrix
+            in="n"
+            type="matrix"
+            values="0 0 0 0 0.45
+                    0 0 0 0 0.29
+                    0 0 0 0 0.11
+                    0 0 0 0.5 0"
+          />
+        </filter>
+        <radialGradient id="gVignette" cx="50%" cy="46%" r="72%">
+          <stop offset="60%" stopColor="rgba(0,0,0,0)" />
+          <stop offset="100%" stopColor="rgba(60,35,10,0.3)" />
         </radialGradient>
-        <radialGradient id="blackStone" cx="38%" cy="32%" r="75%">
-          <stop offset="0%" stopColor="#6a6a6a" />
-          <stop offset="45%" stopColor="#2a2a2a" />
+
+        {/* black stone: glossy with a bright highlight */}
+        <radialGradient id="blackStone" cx="36%" cy="30%" r="80%">
+          <stop offset="0%" stopColor="#8f8f8f" />
+          <stop offset="28%" stopColor="#3a3a3a" />
+          <stop offset="70%" stopColor="#141414" />
           <stop offset="100%" stopColor="#000" />
         </radialGradient>
-        <radialGradient id="whiteStone" cx="38%" cy="32%" r="80%">
+        {/* white stone: soft ivory with subtle shading */}
+        <radialGradient id="whiteStone" cx="36%" cy="30%" r="82%">
           <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="70%" stopColor="#eee" />
-          <stop offset="100%" stopColor="#c8c8c8" />
+          <stop offset="55%" stopColor="#f3f0ea" />
+          <stop offset="100%" stopColor="#cfcac2" />
         </radialGradient>
+
+        <filter id="gStoneShadow" x="-40%" y="-40%" width="180%" height="180%">
+          <feDropShadow dx="0" dy="1.6" stdDeviation="1.4" floodColor="#000" floodOpacity="0.45" />
+        </filter>
+        <filter id="gBoardShadow" x="-12%" y="-12%" width="124%" height="124%">
+          <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#000" floodOpacity="0.4" />
+        </filter>
       </defs>
 
-      {/* board surface */}
-      <rect x={0} y={0} width={W} height={W} rx={6} fill="url(#gWoodGrad)" />
+      {/* wooden frame */}
+      <rect
+        x={-PAD}
+        y={-PAD}
+        width={W + PAD * 2}
+        height={W + PAD * 2}
+        rx={10}
+        fill="url(#gBorder)"
+        filter="url(#gBoardShadow)"
+      />
+      {/* playing surface + grain + vignette */}
+      <rect x={0} y={0} width={W} height={W} rx={3} fill="url(#gWood)" />
+      <rect x={0} y={0} width={W} height={W} rx={3} filter="url(#gGrain)" opacity={0.5} />
+      <rect x={0} y={0} width={W} height={W} rx={3} fill="url(#gVignette)" />
 
       {/* grid lines */}
       {Array.from({ length: SIZE }, (_, i) => (
@@ -74,37 +128,43 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled }: Props) {
         Array.from({ length: SIZE }, (_, c) => {
           const v: Stone | null = board[idx(r, c)];
           const isLast = lastMove && lastMove.r === r && lastMove.c === c;
+          const px = x(c);
+          const py = y(r);
           return (
             <g
               key={`c${r}-${c}`}
               onClick={() => !disabled && onCellTap(r, c)}
               style={{ cursor: disabled ? 'default' : 'pointer' }}
             >
-              <rect
-                x={x(c) - GAP / 2}
-                y={y(r) - GAP / 2}
-                width={GAP}
-                height={GAP}
-                fill="transparent"
-              />
+              <rect x={px - GAP / 2} y={py - GAP / 2} width={GAP} height={GAP} fill="transparent" />
               {v && (
-                <>
+                <g filter="url(#gStoneShadow)">
+                  {/* stone body */}
                   <circle
-                    cx={x(c)}
-                    cy={y(r)}
-                    r={GAP * 0.44}
+                    cx={px}
+                    cy={py}
+                    r={R}
                     fill={v === 'black' ? 'url(#blackStone)' : 'url(#whiteStone)'}
-                    className="gstone"
+                    stroke={v === 'white' ? 'rgba(150,145,135,0.6)' : 'none'}
+                    strokeWidth={v === 'white' ? 0.6 : 0}
+                  />
+                  {/* specular highlight */}
+                  <ellipse
+                    cx={px - R * 0.3}
+                    cy={py - R * 0.36}
+                    rx={R * 0.34}
+                    ry={R * 0.22}
+                    fill={v === 'black' ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.85)'}
                   />
                   {isLast && (
                     <circle
-                      cx={x(c)}
-                      cy={y(r)}
-                      r={3.5}
+                      cx={px}
+                      cy={py}
+                      r={3.6}
                       className={`glast ${v === 'black' ? 'on-black' : 'on-white'}`}
                     />
                   )}
-                </>
+                </g>
               )}
             </g>
           );

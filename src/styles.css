@@ -917,15 +917,13 @@ body {
   touch-action: manipulation;
 }
 .gline {
-  stroke: #4a2f14;
-  stroke-width: 1.1;
-  opacity: 0.85;
+  stroke: #3d2610;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  opacity: 0.9;
 }
 .gstar {
-  fill: #4a2f14;
-}
-.gstone {
-  filter: drop-shadow(0 1.5px 1.5px rgba(0, 0, 0, 0.4));
+  fill: #3d2610;
 }
 .glast {
   fill: none;
