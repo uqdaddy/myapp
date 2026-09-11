@@ -21,7 +21,7 @@
   overscroll-behavior: contain;
 }
 button { touch-action: manipulation; }
-.game-actions .btn, .back-link { min-height: 44px; }
+.game-actions .btn { min-height: 44px; }
 @media (max-width: 380px), (max-height: 720px) {
   .app { gap: 7px; padding-left: 6px; padding-right: 6px; }
   .app .tray { margin: 0 6px; padding: 6px 8px; gap: 3px; }
@@ -416,7 +416,7 @@ body {
 .setup {
   max-width: 440px;
   margin: 0 auto;
-  padding: calc(env(safe-area-inset-top) + 24px) 18px
+  padding: calc(env(safe-area-inset-top) + 8px) 18px
     calc(env(safe-area-inset-bottom) + 24px);
   display: flex;
   flex-direction: column;
@@ -869,6 +869,8 @@ body {
   color: #b6a488;
   font-size: 14px;
   padding: 4px 0;
+  min-height: 32px;
+  margin-bottom: -8px;
 }
 
 /* large stone preview in setup choices */
