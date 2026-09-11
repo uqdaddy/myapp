@@ -160,13 +160,13 @@ body {
 }
 .piece-edge {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.45); /* top bevel highlight */
+  stroke: rgba(255, 250, 235, 0.24); /* matte bevel */
   stroke-width: 0.9;
 }
 
 .piece-inner {
   fill: none;
-  stroke-width: 1.4;
+  stroke-width: 0.85;
 }
 .inner-cho {
   stroke: rgba(7, 90, 48, 0.75);

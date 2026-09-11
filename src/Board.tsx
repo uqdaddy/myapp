@@ -32,15 +32,18 @@ const PIECE_RADIUS: Record<PieceType, number> = {
   soldier: 14.5,
 };
 
-function octagonPoints(cx: number, cy: number, radius: number): string {
-  const pts: string[] = [];
-  for (let i = 0; i < 8; i++) {
-    const angle = (Math.PI / 4) * i - Math.PI / 8 - Math.PI / 2;
-    const x = cx + radius * Math.cos(angle);
-    const y = cy + radius * Math.sin(angle);
-    pts.push(`${x.toFixed(2)},${y.toFixed(2)}`);
-  }
-  return pts.join(' ');
+// Round each corner while retaining the traditional eight-sided silhouette.
+export function roundedStone(cx: number, cy: number, radius: number): string {
+  const vertices = Array.from({ length: 8 }, (_, i) => {
+    const angle = Math.PI / 4 * i - Math.PI / 8 - Math.PI / 2;
+    return [cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)];
+  });
+  const blend = (a: number[], b: number[]) => a.map((v, i) => v * 0.68 + b[i] * 0.32).join(' ');
+  return vertices.map((v, i) => {
+    const before = blend(v, vertices[(i + 7) % 8]);
+    const after = blend(v, vertices[(i + 1) % 8]);
+    return `${i ? 'L' : 'M'} ${before} Q ${v.join(' ')} ${after}`;
+  }).join(' ') + ' Z';
 }
 
 export function Board({
@@ -136,25 +139,26 @@ export function Board({
         {/* IVORY stone face: warm off-white, softly lit — reads as carved bone
             rather than plastic (no single hard highlight). */}
         <radialGradient id="stoneFace" cx="36%" cy="26%" r="84%">
-          <stop offset="0%" stopColor="#fffdf6" />
-          <stop offset="30%" stopColor="#faf1d8" />
-          <stop offset="70%" stopColor="#eeddb4" />
-          <stop offset="100%" stopColor="#d8be8a" />
+          <stop offset="0%" stopColor="#f4f0e5" />
+          <stop offset="30%" stopColor="#eae4d4" />
+          <stop offset="70%" stopColor="#ddd4c0" />
+          <stop offset="100%" stopColor="#c4b79c" />
         </radialGradient>
         {/* ivory rim: aged bone edge, darker at the bottom for thickness */}
         <linearGradient id="stoneRim" x1="0.2" y1="0" x2="0.8" y2="1">
-          <stop offset="0%" stopColor="#f3e6c4" />
-          <stop offset="50%" stopColor="#d3bb88" />
-          <stop offset="100%" stopColor="#a88a56" />
+          <stop offset="0%" stopColor="#dfd5bd" />
+          <stop offset="50%" stopColor="#b7a78b" />
+          <stop offset="100%" stopColor="#88775f" />
         </linearGradient>
         {/* fine ivory grain / mottling on each face */}
         <filter id="stoneGrain" x="-20%" y="-20%" width="140%" height="140%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.35 0.55" numOctaves={2} seed={11} result="n" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.18 0.22" numOctaves={2} seed={11} result="n" />
           <feColorMatrix in="n" type="matrix"
             values="0 0 0 0 0.55
                     0 0 0 0 0.44
                     0 0 0 0 0.22
-                    0 0 0 0.08 0" />
+                    0 0 0 0.16 0" />
+          <feComposite in2="SourceAlpha" operator="in" />
         </filter>
 
         <filter id="pieceShadow" x="-50%" y="-50%" width="200%" height="200%">
@@ -298,51 +302,42 @@ export function Board({
                 (() => {
                   const rad = PIECE_RADIUS[piece.type];
                   const fontSize = rad * 1.18;
-                  const faceR = rad - 2;
+                  const faceR = rad - 1.4;
                   return (
                     <g filter={isSel ? 'url(#selGlow)' : 'url(#pieceShadow)'}>
                       {/* wooden rim (edge thickness) */}
-                      <polygon points={octagonPoints(px, py, rad)} fill="url(#stoneRim)" />
+                      <path d={roundedStone(px, py + 1.8, rad)} fill="url(#stoneRim)" />
                       {/* thin dark seam between rim and face for definition */}
-                      <polygon
-                        points={octagonPoints(px, py, faceR + 0.9)}
+                      <path
+                        d={roundedStone(px, py, faceR + 0.9)}
                         fill="none"
                         stroke="rgba(70,45,15,0.45)"
                         strokeWidth={0.8}
                       />
                       {/* ivory face slightly inset */}
-                      <polygon
-                        points={octagonPoints(px, py, faceR)}
+                      <path
+                        d={roundedStone(px, py, faceR)}
                         fill="url(#stoneFace)"
                         className={`piece-oct ${isSel ? 'piece-selected' : ''}`}
                       />
                       {/* subtle wood grain on the face (clipped to the octagon) */}
-                      <polygon
-                        points={octagonPoints(px, py, faceR)}
+                      <path
+                        d={roundedStone(px, py, faceR)}
                         filter="url(#stoneGrain)"
                         opacity={0.5}
                       />
-                      {/* soft diffuse sheen, upper-left — gentle (ivory, not
-                          glossy plastic) */}
-                      <ellipse
-                        cx={px - rad * 0.26}
-                        cy={py - rad * 0.32}
-                        rx={rad * 0.55}
-                        ry={rad * 0.4}
-                        fill="rgba(255,252,242,0.32)"
-                      />
                       {/* top bevel highlight edge */}
-                      <polygon points={octagonPoints(px, py, faceR)} className="piece-edge" />
+                      <path d={roundedStone(px, py, faceR)} className="piece-edge" />
                       {/* engraved double ring in the side's color */}
-                      <polygon
-                        points={octagonPoints(px, py, rad - 4.6)}
+                      <path
+                        d={roundedStone(px, py, rad - 4.6)}
                         className={`piece-inner inner-${piece.side}`}
                       />
                       {/* engraving highlight: a pale copy offset down-right,
                           so the colored glyph reads as carved into the ivory */}
                       <text
-                        x={px + 0.7}
-                        y={py + 1.2}
+                        x={px + 0.35}
+                        y={py + 0.95}
                         style={{ fontSize }}
                         className="piece-label piece-label-emboss"
                         textAnchor="middle"
