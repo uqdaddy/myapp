@@ -881,7 +881,7 @@ body {
   display: block;
 }
 .gs-glyph {
-  font-size: 17px;
+  /* font-size is set inline per stone so the glyph scales with the piece */
   font-weight: 900;
   font-family: 'Nanum Myeongjo', 'Apple SD Gothic Neo', serif;
 }

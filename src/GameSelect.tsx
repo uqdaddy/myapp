@@ -115,8 +115,9 @@ function JanggiPreview() {
     { cx: GRID[2], cy: GRID[1], label: '車', cls: 'gs-p-han' }, // 한나라 차 (red)
     { cx: GRID[1], cy: GRID[2], label: '馬', cls: 'gs-p-cho' }, // 초나라 마 (green)
   ];
-  const R = 12;
-  const faceR = R - 1.6;
+  const R = 15;
+  const faceR = R - 1.8;
+  const fontSize = R * 1.15; // glyph scales with the stone (as on the real board)
   return (
     <svg className="gs-prev" viewBox="0 0 120 120" role="img" aria-label="장기">
       <PreviewDefs />
@@ -141,16 +142,30 @@ function JanggiPreview() {
           <ellipse cx={s.cx - R * 0.28} cy={s.cy - R * 0.34} rx={R * 0.5} ry={R * 0.32} fill="rgba(255,255,255,0.45)" />
           {/* engraved inner ring in side color */}
           <polygon
-            points={octagon(s.cx, s.cy, R - 3.6)}
+            points={octagon(s.cx, s.cy, R - 4)}
             fill="none"
             stroke={s.cls === 'gs-p-han' ? 'rgba(158,21,21,0.75)' : 'rgba(7,90,48,0.75)'}
             strokeWidth="1"
           />
-          {/* emboss + colored glyph */}
-          <text x={s.cx + 0.5} y={s.cy + 1} className="gs-glyph gs-p-emboss" textAnchor="middle" dominantBaseline="central">
+          {/* emboss + colored glyph, sized to fit inside the stone */}
+          <text
+            x={s.cx + 0.5}
+            y={s.cy + 1}
+            style={{ fontSize }}
+            className="gs-glyph gs-p-emboss"
+            textAnchor="middle"
+            dominantBaseline="central"
+          >
             {s.label}
           </text>
-          <text x={s.cx} y={s.cy + 0.5} className={`gs-glyph ${s.cls}`} textAnchor="middle" dominantBaseline="central">
+          <text
+            x={s.cx}
+            y={s.cy + 0.5}
+            style={{ fontSize }}
+            className={`gs-glyph ${s.cls}`}
+            textAnchor="middle"
+            dominantBaseline="central"
+          >
             {s.label}
           </text>
         </g>
