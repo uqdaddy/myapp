@@ -46,26 +46,27 @@ export function ChessBoard({
       aria-label="체스판"
     >
       <defs>
+        {/* charcoal frame */}
         <linearGradient id="cWoodBorder" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#6b4a2a" />
-          <stop offset="50%" stopColor="#4e341c" />
-          <stop offset="100%" stopColor="#33210f" />
+          <stop offset="0%" stopColor="#3a3a3e" />
+          <stop offset="50%" stopColor="#2a2a2d" />
+          <stop offset="100%" stopColor="#161618" />
         </linearGradient>
-        {/* light + dark square faces with a soft diagonal sheen */}
+        {/* light + dark squares: off-white vs charcoal-grey (B&W theme) */}
         <linearGradient id="cLight" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#f3dcb6" />
-          <stop offset="100%" stopColor="#e6c393" />
+          <stop offset="0%" stopColor="#f5f5f6" />
+          <stop offset="100%" stopColor="#e3e3e6" />
         </linearGradient>
         <linearGradient id="cDark" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#b07a46" />
-          <stop offset="100%" stopColor="#95612f" />
+          <stop offset="0%" stopColor="#5c5c63" />
+          <stop offset="100%" stopColor="#44444a" />
         </linearGradient>
-        {/* wood grain over the whole playfield */}
+        {/* very subtle matte texture over the whole playfield */}
         <filter id="cGrain" x="0" y="0" width="100%" height="100%">
           <feTurbulence
             type="fractalNoise"
-            baseFrequency="0.012 0.09"
-            numOctaves={4}
+            baseFrequency="0.9 0.9"
+            numOctaves={2}
             seed={9}
             stitchTiles="stitch"
             result="n"
@@ -73,23 +74,23 @@ export function ChessBoard({
           <feColorMatrix
             in="n"
             type="matrix"
-            values="0 0 0 0 0.30
-                    0 0 0 0 0.18
-                    0 0 0 0 0.07
-                    0 0 0 0.5 0"
+            values="0 0 0 0 0.4
+                    0 0 0 0 0.4
+                    0 0 0 0 0.43
+                    0 0 0 0.05 0"
           />
         </filter>
         <filter id="cBorderGrain" x="0" y="0" width="100%" height="100%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.02 0.14" numOctaves={3} seed={4} stitchTiles="stitch" result="n" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.8 0.8" numOctaves={2} seed={4} stitchTiles="stitch" result="n" />
           <feColorMatrix in="n" type="matrix"
-            values="0 0 0 0 0.12
+            values="0 0 0 0 0.06
                     0 0 0 0 0.06
-                    0 0 0 0 0.02
-                    0 0 0 0.6 0" />
+                    0 0 0 0 0.07
+                    0 0 0 0.5 0" />
         </filter>
         <radialGradient id="cVignette" cx="50%" cy="46%" r="72%">
-          <stop offset="58%" stopColor="rgba(0,0,0,0)" />
-          <stop offset="100%" stopColor="rgba(40,24,6,0.32)" />
+          <stop offset="60%" stopColor="rgba(0,0,0,0)" />
+          <stop offset="100%" stopColor="rgba(20,20,24,0.16)" />
         </radialGradient>
 
         <filter id="cBoardShadow" x="-15%" y="-15%" width="130%" height="130%">

@@ -62,8 +62,8 @@ export function ChessPiece({ type, side, size, x, y, idPrefix }: Props) {
           {white ? (
             <>
               <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="45%" stopColor="#f2ead6" />
-              <stop offset="100%" stopColor="#c3ad82" />
+              <stop offset="48%" stopColor="#f0f0f2" />
+              <stop offset="100%" stopColor="#c8c8ce" />
             </>
           ) : (
             <>
@@ -82,7 +82,7 @@ export function ChessPiece({ type, side, size, x, y, idPrefix }: Props) {
       <path
         d={PATHS[type]}
         fill={`url(#${bodyGrad})`}
-        stroke={white ? '#8a7448' : '#050506'}
+        stroke={white ? '#6f6f77' : '#050506'}
         strokeWidth={1.6}
         strokeLinejoin="round"
         strokeLinecap="round"

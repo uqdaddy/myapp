@@ -143,19 +143,19 @@ body {
 }
 
 .grid-line {
-  stroke: #4a2f14;
+  stroke: #33333a;
   stroke-width: 1.3;
   stroke-linecap: round;
-  opacity: 0.9;
+  opacity: 0.85;
 }
 
-/* Octagonal wooden stones with a lit ivory face and engraved character. */
+/* Octagonal light-grey stones with a lit face and engraved character. */
 .piece-group {
   pointer-events: none;
 }
 
 .piece-oct {
-  stroke: rgba(120, 85, 40, 0.5);
+  stroke: rgba(90, 90, 96, 0.5);
   stroke-width: 0.8;
 }
 .piece-edge {
@@ -176,7 +176,7 @@ body {
 }
 
 .piece-selected {
-  stroke: #b8791f;
+  stroke: #5a5a62;
   stroke-width: 2.2;
 }
 
@@ -195,7 +195,7 @@ body {
 }
 /* pale emboss copy sitting under the colored glyph */
 .piece-label-emboss {
-  fill: rgba(255, 250, 235, 0.6);
+  fill: rgba(255, 255, 255, 0.55);
 }
 
 .target-dot {
@@ -1023,13 +1023,13 @@ body {
   touch-action: manipulation;
 }
 .gline {
-  stroke: #3d2610;
+  stroke: #33333a;
   stroke-width: 1.2;
   stroke-linecap: round;
-  opacity: 0.9;
+  opacity: 0.85;
 }
 .gstar {
-  fill: #3d2610;
+  fill: #33333a;
 }
 .glast {
   fill: none;
@@ -1097,7 +1097,7 @@ body {
   touch-action: manipulation;
 }
 .clabel text {
-  fill: #e8cfa0;
+  fill: #cfcfd4;
   font-size: 9px;
   font-weight: 700;
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;

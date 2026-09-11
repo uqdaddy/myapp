@@ -65,30 +65,30 @@ export function Board({
       aria-label="장기판"
     >
       <defs>
-        {/* base board wood colour */}
+        {/* board surface: clean off-white / light-grey (black & white theme) */}
         <linearGradient id="woodGrad" x1="0" y1="0" x2="0.9" y2="1">
-          <stop offset="0%" stopColor="#f0c78c" />
-          <stop offset="40%" stopColor="#e3b06d" />
-          <stop offset="100%" stopColor="#cc9450" />
+          <stop offset="0%" stopColor="#fafafa" />
+          <stop offset="55%" stopColor="#ededf0" />
+          <stop offset="100%" stopColor="#dcdce0" />
         </linearGradient>
+        {/* charcoal frame */}
         <linearGradient id="woodBorder" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#8a5a2c" />
-          <stop offset="50%" stopColor="#6e451f" />
-          <stop offset="100%" stopColor="#4a2d12" />
+          <stop offset="0%" stopColor="#3a3a3e" />
+          <stop offset="50%" stopColor="#2a2a2d" />
+          <stop offset="100%" stopColor="#161618" />
         </linearGradient>
-        {/* soft vignette to give the surface depth */}
+        {/* soft neutral vignette for depth */}
         <radialGradient id="vignette" cx="50%" cy="45%" r="72%">
-          <stop offset="55%" stopColor="rgba(0,0,0,0)" />
-          <stop offset="100%" stopColor="rgba(55,32,8,0.34)" />
+          <stop offset="58%" stopColor="rgba(0,0,0,0)" />
+          <stop offset="100%" stopColor="rgba(20,20,24,0.14)" />
         </radialGradient>
 
-        {/* PROCEDURAL WOOD GRAIN: stretched turbulence tinted brown, layered
-            over the base colour with low opacity for a realistic grain. */}
+        {/* fine matte texture on the surface (very subtle grey noise) */}
         <filter id="woodGrain" x="0" y="0" width="100%" height="100%">
           <feTurbulence
             type="fractalNoise"
-            baseFrequency="0.012 0.09"
-            numOctaves={4}
+            baseFrequency="0.9 0.9"
+            numOctaves={2}
             seed={7}
             stitchTiles="stitch"
             result="noise"
@@ -96,19 +96,19 @@ export function Board({
           <feColorMatrix
             in="noise"
             type="matrix"
-            values="0 0 0 0 0.42
-                    0 0 0 0 0.27
-                    0 0 0 0 0.10
-                    0 0 0 0.7 0"
+            values="0 0 0 0 0.35
+                    0 0 0 0 0.35
+                    0 0 0 0 0.38
+                    0 0 0 0.06 0"
             result="grain"
           />
         </filter>
-        {/* grain for the darker border, running vertically */}
+        {/* texture for the charcoal border */}
         <filter id="woodGrainBorder" x="0" y="0" width="100%" height="100%">
           <feTurbulence
             type="fractalNoise"
-            baseFrequency="0.02 0.14"
-            numOctaves={3}
+            baseFrequency="0.8 0.8"
+            numOctaves={2}
             seed={3}
             stitchTiles="stitch"
             result="noise"
@@ -116,39 +116,37 @@ export function Board({
           <feColorMatrix
             in="noise"
             type="matrix"
-            values="0 0 0 0 0.15
-                    0 0 0 0 0.08
-                    0 0 0 0 0.02
-                    0 0 0 0.6 0"
+            values="0 0 0 0 0.06
+                    0 0 0 0 0.06
+                    0 0 0 0 0.07
+                    0 0 0 0.5 0"
           />
         </filter>
 
-        {/* ivory stone face, lit from top-left with a soft specular sheen */}
+        {/* stone face: bright white-grey, lit from top-left */}
         <radialGradient id="stoneFace" cx="35%" cy="28%" r="82%">
-          <stop offset="0%" stopColor="#fffdf5" />
-          <stop offset="28%" stopColor="#f9eecf" />
-          <stop offset="68%" stopColor="#e6d0a1" />
-          <stop offset="100%" stopColor="#bd9d68" />
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="45%" stopColor="#f2f2f4" />
+          <stop offset="100%" stopColor="#d3d3d8" />
         </radialGradient>
-        {/* wooden rim of the disc: bright top-left, deep shadow bottom-right,
-            giving each stone a rounded, chunky thickness. */}
+        {/* grey rim giving each disc a rounded thickness */}
         <linearGradient id="stoneRim" x1="0.15" y1="0" x2="0.85" y2="1">
-          <stop offset="0%" stopColor="#efd9a8" />
-          <stop offset="45%" stopColor="#b8965b" />
-          <stop offset="100%" stopColor="#71531f" />
+          <stop offset="0%" stopColor="#e8e8ec" />
+          <stop offset="45%" stopColor="#b7b7bd" />
+          <stop offset="100%" stopColor="#7c7c82" />
         </linearGradient>
-        {/* subtle grain on each stone face */}
+        {/* subtle grey grain on each stone face */}
         <filter id="stoneGrain" x="-20%" y="-20%" width="140%" height="140%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.5 0.18" numOctaves={2} seed={11} result="n" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.6 0.4" numOctaves={2} seed={11} result="n" />
           <feColorMatrix in="n" type="matrix"
-            values="0 0 0 0 0.55
-                    0 0 0 0 0.40
-                    0 0 0 0 0.18
-                    0 0 0 0.10 0" />
+            values="0 0 0 0 0.5
+                    0 0 0 0 0.5
+                    0 0 0 0 0.52
+                    0 0 0 0.06 0" />
         </filter>
 
         <filter id="pieceShadow" x="-50%" y="-50%" width="200%" height="200%">
-          <feDropShadow dx="0" dy="2.4" stdDeviation="1.9" floodColor="#000" floodOpacity="0.5" />
+          <feDropShadow dx="0" dy="2.4" stdDeviation="1.9" floodColor="#000" floodOpacity="0.4" />
         </filter>
         <filter id="boardShadow" x="-15%" y="-15%" width="130%" height="130%">
           <feDropShadow dx="0" dy="4" stdDeviation="5" floodColor="#000" floodOpacity="0.45" />

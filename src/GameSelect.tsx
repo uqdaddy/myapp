@@ -26,26 +26,26 @@ function octagon(cx: number, cy: number, r: number): string {
 function PreviewDefs() {
   return (
     <defs>
-      {/* --- board wood --- */}
+      {/* --- board surface (B&W theme) --- */}
       <linearGradient id="gsp-wood" x1="0" y1="0" x2="0.9" y2="1">
-        <stop offset="0%" stopColor="#f0c78c" />
-        <stop offset="40%" stopColor="#e3b06d" />
-        <stop offset="100%" stopColor="#cc9450" />
+        <stop offset="0%" stopColor="#fafafa" />
+        <stop offset="55%" stopColor="#ededf0" />
+        <stop offset="100%" stopColor="#dcdce0" />
       </linearGradient>
       <linearGradient id="gsp-border" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="#8a5a2c" />
-        <stop offset="50%" stopColor="#6e451f" />
-        <stop offset="100%" stopColor="#4a2d12" />
+        <stop offset="0%" stopColor="#3a3a3e" />
+        <stop offset="50%" stopColor="#2a2a2d" />
+        <stop offset="100%" stopColor="#161618" />
       </linearGradient>
       <radialGradient id="gsp-vignette" cx="50%" cy="45%" r="72%">
-        <stop offset="55%" stopColor="rgba(0,0,0,0)" />
-        <stop offset="100%" stopColor="rgba(55,32,8,0.34)" />
+        <stop offset="58%" stopColor="rgba(0,0,0,0)" />
+        <stop offset="100%" stopColor="rgba(20,20,24,0.14)" />
       </radialGradient>
       <filter id="gsp-grain" x="0" y="0" width="100%" height="100%">
         <feTurbulence
           type="fractalNoise"
-          baseFrequency="0.03 0.14"
-          numOctaves={4}
+          baseFrequency="0.9 0.9"
+          numOctaves={2}
           seed={7}
           stitchTiles="stitch"
           result="noise"
@@ -53,24 +53,23 @@ function PreviewDefs() {
         <feColorMatrix
           in="noise"
           type="matrix"
-          values="0 0 0 0 0.42
-                  0 0 0 0 0.27
-                  0 0 0 0 0.10
-                  0 0 0 0.7 0"
+          values="0 0 0 0 0.35
+                  0 0 0 0 0.35
+                  0 0 0 0 0.38
+                  0 0 0 0.06 0"
         />
       </filter>
 
-      {/* --- janggi ivory stone --- */}
+      {/* --- janggi light-grey stone --- */}
       <radialGradient id="gsp-stoneFace" cx="35%" cy="28%" r="82%">
-        <stop offset="0%" stopColor="#fffdf5" />
-        <stop offset="28%" stopColor="#f9eecf" />
-        <stop offset="68%" stopColor="#e6d0a1" />
-        <stop offset="100%" stopColor="#bd9d68" />
+        <stop offset="0%" stopColor="#ffffff" />
+        <stop offset="45%" stopColor="#f2f2f4" />
+        <stop offset="100%" stopColor="#d3d3d8" />
       </radialGradient>
       <linearGradient id="gsp-stoneRim" x1="0.15" y1="0" x2="0.85" y2="1">
-        <stop offset="0%" stopColor="#efd9a8" />
-        <stop offset="45%" stopColor="#b8965b" />
-        <stop offset="100%" stopColor="#71531f" />
+        <stop offset="0%" stopColor="#e8e8ec" />
+        <stop offset="45%" stopColor="#b7b7bd" />
+        <stop offset="100%" stopColor="#7c7c82" />
       </linearGradient>
 
       {/* --- gomoku stones --- */}
@@ -82,8 +81,8 @@ function PreviewDefs() {
       </radialGradient>
       <radialGradient id="gsp-white" cx="36%" cy="30%" r="82%">
         <stop offset="0%" stopColor="#ffffff" />
-        <stop offset="55%" stopColor="#f3f0ea" />
-        <stop offset="100%" stopColor="#cfcac2" />
+        <stop offset="55%" stopColor="#f0f0f2" />
+        <stop offset="100%" stopColor="#c9c9cf" />
       </radialGradient>
 
       <filter id="gsp-shadow" x="-50%" y="-50%" width="200%" height="200%">
@@ -129,8 +128,8 @@ function JanggiPreview() {
       {/* grid: horizontal + vertical lines at the SAME coordinates */}
       {GRID.map((p) => (
         <g key={p}>
-          <line x1={lo} y1={p} x2={hi} y2={p} stroke="#4a2f14" strokeWidth="1" opacity="0.85" />
-          <line x1={p} y1={lo} x2={p} y2={hi} stroke="#4a2f14" strokeWidth="1" opacity="0.85" />
+          <line x1={lo} y1={p} x2={hi} y2={p} stroke="#33333a" strokeWidth="1" opacity="0.85" />
+          <line x1={p} y1={lo} x2={p} y2={hi} stroke="#33333a" strokeWidth="1" opacity="0.85" />
         </g>
       ))}
       {/* octagonal pieces centered on intersections */}
@@ -139,9 +138,9 @@ function JanggiPreview() {
           {/* wooden rim */}
           <polygon points={octagon(s.cx, s.cy, R)} fill="url(#gsp-stoneRim)" />
           {/* dark seam */}
-          <polygon points={octagon(s.cx, s.cy, faceR + 0.7)} fill="none" stroke="rgba(70,45,15,0.45)" strokeWidth="0.6" />
-          {/* ivory face */}
-          <polygon points={octagon(s.cx, s.cy, faceR)} fill="url(#gsp-stoneFace)" stroke="rgba(120,85,40,0.5)" strokeWidth="0.5" />
+          <polygon points={octagon(s.cx, s.cy, faceR + 0.7)} fill="none" stroke="rgba(60,60,66,0.4)" strokeWidth="0.6" />
+          {/* light-grey face */}
+          <polygon points={octagon(s.cx, s.cy, faceR)} fill="url(#gsp-stoneFace)" stroke="rgba(90,90,96,0.5)" strokeWidth="0.5" />
           {/* specular sheen */}
           <ellipse cx={s.cx - R * 0.28} cy={s.cy - R * 0.34} rx={R * 0.5} ry={R * 0.32} fill="rgba(255,255,255,0.45)" />
           {/* engraved inner ring in side color */}
@@ -195,8 +194,8 @@ function GomokuPreview() {
       {boardFrame()}
       {GRID.map((p) => (
         <g key={p}>
-          <line x1={lo} y1={p} x2={hi} y2={p} stroke="#3d2610" strokeWidth="1" opacity="0.85" />
-          <line x1={p} y1={lo} x2={p} y2={hi} stroke="#3d2610" strokeWidth="1" opacity="0.85" />
+          <line x1={lo} y1={p} x2={hi} y2={p} stroke="#33333a" strokeWidth="1" opacity="0.85" />
+          <line x1={p} y1={lo} x2={p} y2={hi} stroke="#33333a" strokeWidth="1" opacity="0.85" />
         </g>
       ))}
       {stones.map((s, i) => (
@@ -246,16 +245,16 @@ function ChessPreview() {
     <svg className="gs-prev" viewBox="0 0 120 120" role="img" aria-label="체스">
       <defs>
         <linearGradient id="gsc-border" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#6b4a2a" />
-          <stop offset="100%" stopColor="#33210f" />
+          <stop offset="0%" stopColor="#3a3a3e" />
+          <stop offset="100%" stopColor="#161618" />
         </linearGradient>
         <linearGradient id="gsc-light" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#f3dcb6" />
-          <stop offset="100%" stopColor="#e6c393" />
+          <stop offset="0%" stopColor="#f5f5f6" />
+          <stop offset="100%" stopColor="#e3e3e6" />
         </linearGradient>
         <linearGradient id="gsc-dark" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#b07a46" />
-          <stop offset="100%" stopColor="#95612f" />
+          <stop offset="0%" stopColor="#5c5c63" />
+          <stop offset="100%" stopColor="#44444a" />
         </linearGradient>
       </defs>
       <rect x="2" y="2" width="116" height="116" rx="12" fill="url(#gsc-border)" />

@@ -41,23 +41,24 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled, winningLine 
       aria-label="오목판"
     >
       <defs>
-        {/* board wood base + border */}
+        {/* board surface: light-grey / off-white (black & white theme) */}
         <linearGradient id="gWood" x1="0" y1="0" x2="0.9" y2="1">
-          <stop offset="0%" stopColor="#f4d59a" />
-          <stop offset="45%" stopColor="#e8bd7b" />
-          <stop offset="100%" stopColor="#d6a862" />
+          <stop offset="0%" stopColor="#fafafa" />
+          <stop offset="50%" stopColor="#ececed" />
+          <stop offset="100%" stopColor="#dadade" />
         </linearGradient>
+        {/* charcoal frame */}
         <linearGradient id="gBorder" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#8a5a2c" />
-          <stop offset="50%" stopColor="#6e451f" />
-          <stop offset="100%" stopColor="#4a2d12" />
+          <stop offset="0%" stopColor="#3a3a3e" />
+          <stop offset="50%" stopColor="#2a2a2d" />
+          <stop offset="100%" stopColor="#161618" />
         </linearGradient>
-        {/* procedural wood grain */}
+        {/* fine matte grey texture */}
         <filter id="gGrain" x="0" y="0" width="100%" height="100%">
           <feTurbulence
             type="fractalNoise"
-            baseFrequency="0.012 0.08"
-            numOctaves={4}
+            baseFrequency="0.9 0.9"
+            numOctaves={2}
             seed={11}
             stitchTiles="stitch"
             result="n"
@@ -65,15 +66,15 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled, winningLine 
           <feColorMatrix
             in="n"
             type="matrix"
-            values="0 0 0 0 0.45
-                    0 0 0 0 0.29
-                    0 0 0 0 0.11
-                    0 0 0 0.5 0"
+            values="0 0 0 0 0.35
+                    0 0 0 0 0.35
+                    0 0 0 0 0.38
+                    0 0 0 0.06 0"
           />
         </filter>
         <radialGradient id="gVignette" cx="50%" cy="46%" r="72%">
-          <stop offset="60%" stopColor="rgba(0,0,0,0)" />
-          <stop offset="100%" stopColor="rgba(60,35,10,0.3)" />
+          <stop offset="62%" stopColor="rgba(0,0,0,0)" />
+          <stop offset="100%" stopColor="rgba(20,20,24,0.13)" />
         </radialGradient>
 
         {/* black stone: glossy with a bright highlight */}
@@ -83,11 +84,11 @@ export function GomokuBoard({ board, lastMove, onCellTap, disabled, winningLine 
           <stop offset="70%" stopColor="#141414" />
           <stop offset="100%" stopColor="#000" />
         </radialGradient>
-        {/* white stone: soft ivory with subtle shading */}
+        {/* white stone: neutral pearl with subtle grey shading */}
         <radialGradient id="whiteStone" cx="36%" cy="30%" r="82%">
           <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="55%" stopColor="#f3f0ea" />
-          <stop offset="100%" stopColor="#cfcac2" />
+          <stop offset="55%" stopColor="#f0f0f2" />
+          <stop offset="100%" stopColor="#c9c9cf" />
         </radialGradient>
 
         <filter id="gStoneShadow" x="-40%" y="-40%" width="180%" height="180%">
