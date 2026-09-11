@@ -16,42 +16,140 @@ function octagon(cx: number, cy: number, r: number): string {
   }).join(' ');
 }
 
-// Small SVG preview of a Janggi board with two pieces sitting exactly on grid
-// intersections (pieces are placed on line crossings in Janggi).
+// Shared <defs> replicating the exact look of the real boards (Board.tsx and
+// GomokuBoard.tsx): procedural wood grain, vignette, ivory/glossy stones with
+// bevels and specular sheen. IDs are prefixed `gsp-` to avoid clashing.
+function PreviewDefs() {
+  return (
+    <defs>
+      {/* --- board wood --- */}
+      <linearGradient id="gsp-wood" x1="0" y1="0" x2="0.9" y2="1">
+        <stop offset="0%" stopColor="#f0c78c" />
+        <stop offset="40%" stopColor="#e3b06d" />
+        <stop offset="100%" stopColor="#cc9450" />
+      </linearGradient>
+      <linearGradient id="gsp-border" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="#8a5a2c" />
+        <stop offset="50%" stopColor="#6e451f" />
+        <stop offset="100%" stopColor="#4a2d12" />
+      </linearGradient>
+      <radialGradient id="gsp-vignette" cx="50%" cy="45%" r="72%">
+        <stop offset="55%" stopColor="rgba(0,0,0,0)" />
+        <stop offset="100%" stopColor="rgba(55,32,8,0.34)" />
+      </radialGradient>
+      <filter id="gsp-grain" x="0" y="0" width="100%" height="100%">
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.03 0.14"
+          numOctaves={4}
+          seed={7}
+          stitchTiles="stitch"
+          result="noise"
+        />
+        <feColorMatrix
+          in="noise"
+          type="matrix"
+          values="0 0 0 0 0.42
+                  0 0 0 0 0.27
+                  0 0 0 0 0.10
+                  0 0 0 0.7 0"
+        />
+      </filter>
+
+      {/* --- janggi ivory stone --- */}
+      <radialGradient id="gsp-stoneFace" cx="35%" cy="28%" r="82%">
+        <stop offset="0%" stopColor="#fffdf5" />
+        <stop offset="28%" stopColor="#f9eecf" />
+        <stop offset="68%" stopColor="#e6d0a1" />
+        <stop offset="100%" stopColor="#bd9d68" />
+      </radialGradient>
+      <linearGradient id="gsp-stoneRim" x1="0.15" y1="0" x2="0.85" y2="1">
+        <stop offset="0%" stopColor="#efd9a8" />
+        <stop offset="45%" stopColor="#b8965b" />
+        <stop offset="100%" stopColor="#71531f" />
+      </linearGradient>
+
+      {/* --- gomoku stones --- */}
+      <radialGradient id="gsp-black" cx="36%" cy="30%" r="80%">
+        <stop offset="0%" stopColor="#8f8f8f" />
+        <stop offset="28%" stopColor="#3a3a3a" />
+        <stop offset="70%" stopColor="#141414" />
+        <stop offset="100%" stopColor="#000" />
+      </radialGradient>
+      <radialGradient id="gsp-white" cx="36%" cy="30%" r="82%">
+        <stop offset="0%" stopColor="#ffffff" />
+        <stop offset="55%" stopColor="#f3f0ea" />
+        <stop offset="100%" stopColor="#cfcac2" />
+      </radialGradient>
+
+      <filter id="gsp-shadow" x="-50%" y="-50%" width="200%" height="200%">
+        <feDropShadow dx="0" dy="1.4" stdDeviation="1.1" floodColor="#000" floodOpacity="0.5" />
+      </filter>
+    </defs>
+  );
+}
+
+// Common board frame + surface (wood grain + vignette) shared by both previews.
+function boardFrame() {
+  return (
+    <>
+      {/* outer wooden border */}
+      <rect x="0" y="0" width="120" height="120" rx="12" fill="url(#gsp-border)" />
+      {/* inner bevel */}
+      <rect x="5" y="5" width="110" height="110" rx="8" fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth="1.2" />
+      <rect x="6.2" y="6.2" width="107.6" height="107.6" rx="7" fill="none" stroke="rgba(255,225,170,0.25)" strokeWidth="0.8" />
+      {/* playing surface: base wood + procedural grain + vignette */}
+      <rect x="7" y="7" width="106" height="106" rx="4" fill="url(#gsp-wood)" />
+      <rect x="7" y="7" width="106" height="106" rx="4" filter="url(#gsp-grain)" opacity={0.5} />
+      <rect x="7" y="7" width="106" height="106" rx="4" fill="url(#gsp-vignette)" />
+    </>
+  );
+}
+
+// Janggi preview: real board texture + a Han chariot (車, red) and a Cho horse
+// (馬, green) sitting on grid intersections.
 function JanggiPreview() {
   const lo = GRID[0];
   const hi = GRID[GRID.length - 1];
-  // Pieces on intersections two cells apart so they never overlap.
   const pieces = [
-    { cx: GRID[1], cy: GRID[2], label: '楚', cls: 'gs-p-cho' },
-    { cx: GRID[2], cy: GRID[1], label: '漢', cls: 'gs-p-han' },
+    { cx: GRID[2], cy: GRID[1], label: '車', cls: 'gs-p-han' }, // 한나라 차 (red)
+    { cx: GRID[1], cy: GRID[2], label: '馬', cls: 'gs-p-cho' }, // 초나라 마 (green)
   ];
-  const R = 11;
+  const R = 12;
+  const faceR = R - 1.6;
   return (
     <svg className="gs-prev" viewBox="0 0 120 120" role="img" aria-label="장기">
-      <defs>
-        <linearGradient id="gsjWood" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#f0c78c" />
-          <stop offset="100%" stopColor="#cc9450" />
-        </linearGradient>
-        <radialGradient id="gsjFace" cx="35%" cy="30%" r="80%">
-          <stop offset="0%" stopColor="#fffbf0" />
-          <stop offset="60%" stopColor="#f0dcae" />
-          <stop offset="100%" stopColor="#cba873" />
-        </radialGradient>
-      </defs>
-      <rect x="2" y="2" width="116" height="116" rx="12" fill="url(#gsjWood)" stroke="#7a4e22" strokeWidth="3" />
+      <PreviewDefs />
+      {boardFrame()}
       {/* grid: horizontal + vertical lines at the SAME coordinates */}
       {GRID.map((p) => (
         <g key={p}>
-          <line x1={lo} y1={p} x2={hi} y2={p} stroke="#5a3a18" strokeWidth="1" opacity="0.55" />
-          <line x1={p} y1={lo} x2={p} y2={hi} stroke="#5a3a18" strokeWidth="1" opacity="0.55" />
+          <line x1={lo} y1={p} x2={hi} y2={p} stroke="#4a2f14" strokeWidth="1" opacity="0.85" />
+          <line x1={p} y1={lo} x2={p} y2={hi} stroke="#4a2f14" strokeWidth="1" opacity="0.85" />
         </g>
       ))}
       {/* octagonal pieces centered on intersections */}
       {pieces.map((s) => (
-        <g key={s.label}>
-          <polygon points={octagon(s.cx, s.cy, R)} fill="url(#gsjFace)" stroke="#9a7538" strokeWidth="1" />
+        <g key={s.label} filter="url(#gsp-shadow)">
+          {/* wooden rim */}
+          <polygon points={octagon(s.cx, s.cy, R)} fill="url(#gsp-stoneRim)" />
+          {/* dark seam */}
+          <polygon points={octagon(s.cx, s.cy, faceR + 0.7)} fill="none" stroke="rgba(70,45,15,0.45)" strokeWidth="0.6" />
+          {/* ivory face */}
+          <polygon points={octagon(s.cx, s.cy, faceR)} fill="url(#gsp-stoneFace)" stroke="rgba(120,85,40,0.5)" strokeWidth="0.5" />
+          {/* specular sheen */}
+          <ellipse cx={s.cx - R * 0.28} cy={s.cy - R * 0.34} rx={R * 0.5} ry={R * 0.32} fill="rgba(255,255,255,0.45)" />
+          {/* engraved inner ring in side color */}
+          <polygon
+            points={octagon(s.cx, s.cy, R - 3.6)}
+            fill="none"
+            stroke={s.cls === 'gs-p-han' ? 'rgba(158,21,21,0.75)' : 'rgba(7,90,48,0.75)'}
+            strokeWidth="1"
+          />
+          {/* emboss + colored glyph */}
+          <text x={s.cx + 0.5} y={s.cy + 1} className="gs-glyph gs-p-emboss" textAnchor="middle" dominantBaseline="central">
+            {s.label}
+          </text>
           <text x={s.cx} y={s.cy + 0.5} className={`gs-glyph ${s.cls}`} textAnchor="middle" dominantBaseline="central">
             {s.label}
           </text>
@@ -61,12 +159,12 @@ function JanggiPreview() {
   );
 }
 
-// Small SVG preview of a Gomoku board with non-overlapping black/white stones
-// sitting on grid intersections (diameter < grid gap, so they never touch).
+// Gomoku preview: real board texture + glossy black/white stones on grid
+// intersections (diameter < grid gap, so they never overlap).
 function GomokuPreview() {
   const lo = GRID[0];
   const hi = GRID[GRID.length - 1];
-  const R = 10.5; // diameter 21 < gap 25 -> clear space between adjacent stones
+  const R = 10.5;
   const stones: { cx: number; cy: number; color: 'black' | 'white' }[] = [
     { cx: GRID[1], cy: GRID[2], color: 'black' },
     { cx: GRID[2], cy: GRID[2], color: 'white' },
@@ -74,45 +172,39 @@ function GomokuPreview() {
   ];
   return (
     <svg className="gs-prev" viewBox="0 0 120 120" role="img" aria-label="오목">
-      <defs>
-        <linearGradient id="gsgWood" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#f2cf8c" />
-          <stop offset="100%" stopColor="#d3a057" />
-        </linearGradient>
-        <radialGradient id="gsgBlack" cx="36%" cy="30%" r="80%">
-          <stop offset="0%" stopColor="#8f8f8f" />
-          <stop offset="40%" stopColor="#2c2c2c" />
-          <stop offset="100%" stopColor="#000" />
-        </radialGradient>
-        <radialGradient id="gsgWhite" cx="36%" cy="30%" r="82%">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="60%" stopColor="#f0ede6" />
-          <stop offset="100%" stopColor="#cbc6bd" />
-        </radialGradient>
-      </defs>
-      <rect x="2" y="2" width="116" height="116" rx="12" fill="url(#gsgWood)" stroke="#7a4e22" strokeWidth="3" />
+      <PreviewDefs />
+      {boardFrame()}
       {GRID.map((p) => (
         <g key={p}>
-          <line x1={lo} y1={p} x2={hi} y2={p} stroke="#3d2610" strokeWidth="1" opacity="0.6" />
-          <line x1={p} y1={lo} x2={p} y2={hi} stroke="#3d2610" strokeWidth="1" opacity="0.6" />
+          <line x1={lo} y1={p} x2={hi} y2={p} stroke="#3d2610" strokeWidth="1" opacity="0.85" />
+          <line x1={p} y1={lo} x2={p} y2={hi} stroke="#3d2610" strokeWidth="1" opacity="0.85" />
         </g>
       ))}
       {stones.map((s, i) => (
-        <g key={i}>
+        <g key={i} filter="url(#gsp-shadow)">
           <circle
             cx={s.cx}
             cy={s.cy}
             r={R}
-            fill={s.color === 'black' ? 'url(#gsgBlack)' : 'url(#gsgWhite)'}
-            stroke={s.color === 'white' ? '#b9b3a8' : 'none'}
-            strokeWidth={s.color === 'white' ? 0.5 : 0}
+            fill={s.color === 'black' ? 'url(#gsp-black)' : 'url(#gsp-white)'}
+            stroke={s.color === 'white' ? 'rgba(150,145,135,0.6)' : 'rgba(0,0,0,0.5)'}
+            strokeWidth={0.5}
           />
+          {/* broad soft sheen */}
           <ellipse
-            cx={s.cx - R * 0.32}
+            cx={s.cx - R * 0.26}
+            cy={s.cy - R * 0.3}
+            rx={R * 0.56}
+            ry={R * 0.44}
+            fill={s.color === 'black' ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.4)'}
+          />
+          {/* tight specular highlight */}
+          <ellipse
+            cx={s.cx - R * 0.3}
             cy={s.cy - R * 0.36}
             rx={R * 0.3}
             ry={R * 0.2}
-            fill={s.color === 'black' ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.9)'}
+            fill={s.color === 'black' ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.95)'}
           />
         </g>
       ))}

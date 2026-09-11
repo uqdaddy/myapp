@@ -891,6 +891,10 @@ body {
 .gs-p-han {
   fill: #9e1515;
 }
+/* pale emboss copy under the colored glyph, matching the real board pieces */
+.gs-p-emboss {
+  fill: rgba(255, 250, 235, 0.6);
+}
 .gs-name {
   font-size: 19px;
   font-weight: 800;
