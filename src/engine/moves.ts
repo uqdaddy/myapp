@@ -314,9 +314,7 @@ export function isInCheck(board: Board, side: Side): boolean {
   return false;
 }
 
-// The two generals may not face each other on the same file with nothing
-// between them (bikjang). Treat a position where the mover creates a clear
-// facing as illegal.
+// Detect facing generals for diagnostics. This app permits facing generals.
 export function generalsFacing(board: Board): boolean {
   const g1 = findGeneral(board, 'cho');
   const g2 = findGeneral(board, 'han');
@@ -338,15 +336,13 @@ export function applyMove(board: Board, move: Move): Board {
   return next;
 }
 
-// Legal moves = pseudo moves that do not leave own general in check
-// and do not create a bikjang facing.
+// Legal moves preserve ordinary king safety; facing alone is not an attack.
 export function legalMovesFor(board: Board, from: Pos): Move[] {
   const piece = board[from.r][from.c];
   if (!piece) return [];
   return pseudoMovesFor(board, from).filter((m) => {
     const after = applyMove(board, m);
     if (isInCheck(after, piece.side)) return false;
-    if (generalsFacing(after)) return false;
     return true;
   });
 }

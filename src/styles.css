@@ -8,6 +8,8 @@
   --panel: #3a322d;
   --text: #f3ecd8;
 }
+.pass-button { margin: 0 12px; min-height: 44px; }
+.pass-notice { text-align: center; font-size: 12px; color: #d8c9ad; }
 .move-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; color: #baad98; font-size: 11px; }
 .move-legend span { display: inline-flex; align-items: center; gap: 4px; }
 .move-legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; }

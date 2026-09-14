@@ -3,7 +3,8 @@ import { initialState } from '../src/engine/chess/board';
 import { allLegalMoves, advanceState, legalMovesFor } from '../src/engine/chess/moves';
 import { getStatus } from '../src/engine/chess/game';
 import { CState } from '../src/engine/chess/types';
-import { pseudoMovesFor, generalsFacing } from '../src/engine/moves';
+import { pseudoMovesFor, generalsFacing, legalMovesFor as janggiLegal } from '../src/engine/moves';
+import { getStatus as janggiStatus } from '../src/engine/game';
 import { Board } from '../src/engine/types';
 import { emptyBoard, idx } from '../src/engine/gomoku/types';
 import { hasWon } from '../src/engine/gomoku/rules';
@@ -50,6 +51,16 @@ check('Same-color bishops are insufficient, opposite colors are not',()=>{
   const s=state();s.board[7][4]={type:'king',side:'white'};s.board[0][4]={type:'king',side:'black'};s.board[7][2]={type:'bishop',side:'white'};s.board[0][5]={type:'bishop',side:'black'};assert.equal(getStatus(s).kind,'draw');s.board[0][5]=null;s.board[0][2]={type:'bishop',side:'black'};assert.equal(getStatus(s).kind,'playing');
 });
 const jb=():Board=>Array.from({length:10},()=>Array(9).fill(null));
+check('Janggi allows facing generals and preserves one-step palace movement',()=>{
+ const b=jb();b[8][3]={type:'general',side:'cho'};b[1][4]={type:'general',side:'han'};
+ const moves=janggiLegal(b,{r:8,c:3});assert(moves.some(m=>m.to.r===8&&m.to.c===4));assert(!moves.some(m=>m.to.c===5));
+ b[8][3]=null;b[8][4]={type:'general',side:'cho'};assert.deepEqual(janggiStatus(b,'cho'),{kind:'playing',check:false});
+ b[5][4]={type:'chariot',side:'han'};assert.equal(janggiStatus(b,'cho').kind,'playing');assert(!janggiLegal(b,{r:8,c:4}).some(m=>m.to.r===7&&m.to.c===4));
+});
+check('Janggi no-move non-check position may pass instead of losing',()=>{
+ const b:Board=Array.from({length:10},()=>Array.from({length:9},()=>({type:'guard',side:'cho'})));
+ b[8][4]={type:'general',side:'cho'};assert.deepEqual(janggiStatus(b,'cho'),{kind:'playing',check:false});
+});
 check('Janggi cannon requires a non-cannon screen; cannot capture cannon',()=>{
  const b=jb();b[5][0]={type:'cannon',side:'cho'};assert.equal(pseudoMovesFor(b,{r:5,c:0}).length,0);b[5][2]={type:'soldier',side:'cho'};assert(pseudoMovesFor(b,{r:5,c:0}).some(m=>m.to.c===3));b[5][4]={type:'cannon',side:'han'};assert(!pseudoMovesFor(b,{r:5,c:0}).some(m=>m.to.c===4));b[5][2]={type:'cannon',side:'cho'};assert.equal(pseudoMovesFor(b,{r:5,c:0}).length,0);
 });

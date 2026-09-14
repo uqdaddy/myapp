@@ -40,6 +40,7 @@ export default function App({ onExit }: { onExit?: () => void } = {}) {
   const [selected, setSelected] = useState<Pos | null>(null);
   const [lastMove, setLastMove] = useState<Move | null>(null);
   const [thinking, setThinking] = useState(false);
+  const [lastPass, setLastPass] = useState<Side | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty>('normal');
 
   const status = useMemo(() => getStatus(board, toMove), [board, toMove]);
@@ -97,11 +98,20 @@ export default function App({ onExit }: { onExit?: () => void } = {}) {
 
 
   const doMove = useCallback((move: Move) => {
+    setLastPass(null);
     playPlaceSound(!!move.captured); // wooden "clack" on every move
     setBoard((b) => applyMove(b, move));
     setLastMove(move);
     setSelected(null);
     setToMove((s) => opponent(s));
+  }, []);
+
+  const passTurn = useCallback((side: Side) => {
+    setSelected(null);
+    setLastMove(null);
+    setLastPass(side);
+    setThinking(false);
+    setToMove(opponent(side));
   }, []);
 
   const onCellTap = useCallback(
@@ -147,10 +157,10 @@ export default function App({ onExit }: { onExit?: () => void } = {}) {
     let cancelled = false;
 
     const legal = allLegalMoves(board, aiSide);
-    // Safety: if there are no legal moves the game is already over; bail.
+    // With no ordinary moves and no check, the AI passes instead of losing.
     if (legal.length === 0) {
-      setThinking(false);
-      return;
+      aiTimer.current = window.setTimeout(() => passTurn(aiSide), MIN_AI_DELAY);
+      return () => { if (aiTimer.current) window.clearTimeout(aiTimer.current); };
     }
 
     // Match the engine's (from,to) to one of our validated legal moves.
@@ -194,6 +204,10 @@ export default function App({ onExit }: { onExit?: () => void } = {}) {
       .then((res) => {
         if (cancelled) return;
         window.clearTimeout(watchdog);
+        if (res && res.from.r === res.to.r && res.from.c === res.to.c && status.kind === 'playing' && !status.check) {
+          aiTimer.current = window.setTimeout(() => { if (!cancelled) passTurn(aiSide); }, Math.max(0, MIN_AI_DELAY - (Date.now() - startedAt)));
+          return;
+        }
         finish(toLegalMove(res)); // null -> random legal fallback
       })
       .catch(() => {
@@ -235,6 +249,7 @@ export default function App({ onExit }: { onExit?: () => void } = {}) {
     setLastMove(null);
     setThinking(false);
     setPhase('playing');
+    setLastPass(null);
   }, []);
 
   const backToSetup = useCallback(() => {
@@ -376,6 +391,8 @@ export default function App({ onExit }: { onExit?: () => void } = {}) {
         label={`나 (${SIDE_NAME[humanSide]})`}
       />
 
+      {lastPass && <div className="pass-notice" role="status">{lastPass === humanSide ? '내가' : 'AI가'} 한 수 쉬었습니다.</div>}
+      <button className="btn pass-button" disabled={gameOver || thinking || toMove !== humanSide || inCheck} onClick={() => { unlockAudio(); passTurn(humanSide); }}>한 수 쉬기</button>
       <MoveLegend />
       <GameActions onExit={onExit} onNewGame={backToSetup} />
     </div>

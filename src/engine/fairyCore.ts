@@ -8,6 +8,7 @@
 // `.wasm` (copied into public/engine by scripts/copy-wasm.mjs).
 
 type StockfishModule = {
+  FS: { writeFile: (path: string, content: string) => void };
   postMessage: (cmd: string) => void;
   addMessageListener: (fn: (line: string) => void) => void;
 };
@@ -15,6 +16,7 @@ type StockfishModule = {
 let modulePromise: Promise<StockfishModule> | null = null;
 let uciInitialized = false; // has `uci`/`uciok` completed once
 let currentVariant: string | null = null; // variant currently selected
+let janggiRulesLoaded = false;
 
 type LineHandler = (line: string) => void;
 const lineHandlers = new Set<LineHandler>();
@@ -128,6 +130,15 @@ export async function ensureVariant(variant: string): Promise<StockfishModule> {
   if (!uciInitialized) {
     await sendAndWait(mod, 'uci', (l) => l === 'uciok', 15000);
     uciInitialized = true;
+  }
+  if (variant === 'janggi') {
+    if (!janggiRulesLoaded) {
+      mod.FS.writeFile('/myapp-variants.ini', '[myappjanggi:janggi]\nbikjangRule = false\nflyingGeneral = false\npass = true\n');
+      mod.postMessage('setoption name VariantPath value /myapp-variants.ini');
+      await sendAndWait(mod, 'isready', l => l === 'readyok', 15000);
+      janggiRulesLoaded = true;
+    }
+    variant = 'myappjanggi';
   }
   if (currentVariant !== variant) {
     mod.postMessage(`setoption name UCI_Variant value ${variant}`);

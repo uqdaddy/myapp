@@ -21,8 +21,9 @@ all levels still take an immediate win and defend an immediate loss.
 ## Explicit app rule variants
 
 - Gomoku: freestyle, no forbidden moves, five or more wins.
-- Janggi: facing generals is prohibited; passing and accepting bikjang are not
-  implemented; no legal move loses. This is a simplified app ruleset.
+- Janggi: facing generals is allowed. Palace movement remains one step along
+  the existing palace connections. A side may pass when not in check;
+  having no legal ordinary move without check does not lose the game.
 - Chess: 50 moves without capture/pawn movement auto-draws in this app; repetition
   claims and automatic repetition draws are not implemented. FIDE tournament
   rules distinguish claimable 50-move draws from automatic 75-move draws.
