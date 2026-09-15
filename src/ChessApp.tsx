@@ -240,6 +240,14 @@ export function ChessApp({ onExit }: { onExit?: () => void }) {
     return null;
   }, [status, humanSide]);
 
+  const [revealedResult, setRevealedResult] = useState<typeof endResult>(null);
+  useEffect(() => {
+    setRevealedResult(null);
+    if (phase !== 'playing' || !endResult || endResult.win || endResult.draw) return;
+    const timer = window.setTimeout(() => setRevealedResult(endResult), 3000);
+    return () => window.clearTimeout(timer);
+  }, [phase, endResult]);
+
   if (isInAppBrowser()) return <InAppNotice />;
 
   if (phase === 'setup') {
@@ -306,7 +314,7 @@ export function ChessApp({ onExit }: { onExit?: () => void }) {
           </div>
         )}
 
-        {endResult && (
+        {endResult && (endResult.win || endResult.draw || revealedResult === endResult) && (
           <div className="result-overlay">
             <div className={`result-card ${endResult.draw ? 'draw' : endResult.win ? 'win' : 'lose'}`}>
               <div className="result-title">{endResult.title}</div>
