@@ -298,6 +298,15 @@ export default function App({ onExit }: { onExit?: () => void } = {}) {
     return null;
   }, [status, humanSide]);
 
+  // Keep the final position visible before covering an AI win with the result.
+  const [revealedResult, setRevealedResult] = useState<typeof endResult>(null);
+  useEffect(() => {
+    setRevealedResult(null);
+    if (phase !== 'playing' || !endResult || endResult.win) return;
+    const timer = window.setTimeout(() => setRevealedResult(endResult), 3000);
+    return () => window.clearTimeout(timer);
+  }, [phase, endResult]);
+
   // In an in-app browser (KakaoTalk etc.) the engine can't run — show guidance
   // / auto-escape to a real browser instead of the game.
   if (isInAppBrowser()) {
@@ -344,7 +353,7 @@ export default function App({ onExit }: { onExit?: () => void } = {}) {
           </div>
         )}
 
-        {endResult && (
+        {endResult && (endResult.win || revealedResult === endResult) && (
           <div className="result-overlay">
             <div className={`result-card ${endResult.win ? 'win' : 'lose'}`}>
               <div className="result-title">{endResult.title}</div>
