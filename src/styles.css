@@ -13,8 +13,12 @@
 .move-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; color: #baad98; font-size: 11px; }
 .move-legend span { display: inline-flex; align-items: center; gap: 4px; }
 .move-legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; }
-.legend-from { border: 2px dashed #8ed7ee; }
-.legend-to { border: 2px solid #8ed7ee; }
+.legend-from {
+  background: conic-gradient(#66d2cf 0 15%, transparent 15% 25%, #66d2cf 25% 40%, transparent 40% 50%, #66d2cf 50% 65%, transparent 65% 75%, #66d2cf 75% 90%, transparent 90%);
+  -webkit-mask: radial-gradient(circle, transparent 48%, #000 53%);
+  mask: radial-gradient(circle, transparent 48%, #000 53%);
+}
+.legend-to { border: 2px solid #66d2cf; background: rgba(102, 210, 207, 0.14); }
 .legend-selected { background: #ffc85a; }
 .legend-target { background: #3cab94; border-radius: 50% !important; }
 .tray-pieces {
@@ -233,16 +237,22 @@ body {
 }
 
 .last-from {
-  fill: none;
-  stroke: #164d64;
-  stroke-width: 2.5;
-  stroke-dasharray: 4 3;
+  fill: rgba(102, 210, 207, 0.05);
+  stroke: #66d2cf;
+  stroke-width: 2.2;
+  stroke-dasharray: 14 20.6;
+  stroke-linecap: round;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: rotate(11.25deg);
+  filter: drop-shadow(0 0 1.5px rgba(19, 57, 59, 0.75));
   pointer-events: none;
 }
 .last-to {
-  fill: none;
-  stroke: #164d64;
-  stroke-width: 3;
+  fill: rgba(102, 210, 207, 0.1);
+  stroke: #66d2cf;
+  stroke-width: 2.4;
+  filter: drop-shadow(0 0 1.5px rgba(19, 57, 59, 0.8));
   pointer-events: none;
 }
 
@@ -980,18 +990,21 @@ body {
   font-weight: 700;
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
-/* Inset outlines preserve the wooden checkerboard under the last move. */
+/* Refined move markers: four corner accents at origin, a quiet halo at destination. */
 .clast {
-  fill: none;
-  stroke: #164d64;
-  stroke-width: 2.5;
+  fill: rgba(102, 210, 207, 0.1);
+  stroke: #66d2cf;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 1.5px rgba(19, 57, 59, 0.8));
   pointer-events: none;
 }
 .clast-from {
-  stroke-dasharray: 4 3;
+  fill: rgba(102, 210, 207, 0.05);
+  stroke-dasharray: 15 24;
 }
 .clast-to {
-  stroke-width: 3;
+  stroke-width: 2.4;
 }
 .csel {
   fill: rgba(255, 200, 90, 0.5);
